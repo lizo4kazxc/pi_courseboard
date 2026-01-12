@@ -1,0 +1,20 @@
+[
+  {
+    "course_id": "web-101",
+    "title": "Web Development",
+    "room": "B1.12",
+    "description": "Foundations of HTML, CSS, and JavaScript with practical labs.",
+    "overview": "Build a static site, then add interactivity and basic tooling.",
+    "button_gpio_pin": 17,
+    "image_path": ""
+  },
+  {
+    "course_id": "ux-201",
+    "title": "UX Design",
+    "room": "C2.05",
+    "description": "User research, wireframes, prototyping, and usability testing.",
+    "overview": "From problem framing to validated interface prototypes.",
+    "button_gpio_pin": 27,
+    "image_path": ""
+  }
+]

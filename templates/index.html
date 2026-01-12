@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">KDG</div>
+        <div class="titles">
+          <div class="title">{{ title }}</div>
+          <div class="subtitle">Desktop only display. Real time GPIO buttons.</div>
+        </div>
+      </div>
+
+      <div class="status">
+        <div class="pill" id="wsStatus">Connecting</div>
+        <button class="btn secondary" id="clearBtn" type="button">Clear history</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="panel">
+        <h2>Buttons</h2>
+        <div class="grid" id="buttonsGrid"></div>
+        <div class="hint" id="hintLine"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Selected courses</h2>
+        <div class="scrollRow" id="cardsRow"></div>
+        <div class="emptyState" id="emptyState">
+          Press a course button to add it here. Use the Enter button or Clear history.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
