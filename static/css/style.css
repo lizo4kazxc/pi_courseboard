@@ -550,3 +550,36 @@ html, body {
   border-color: rgba(22, 163, 74, 0.25);
   background: linear-gradient(180deg, rgba(22, 163, 74, 0.07), rgba(2, 6, 23, 0.02));
 }
+
+body.mode-mock #buttonsGrid,
+body.mode-mock #cardsRow {
+  display: none;
+}
+
+body.mode-mock #buttonsGridMock,
+body.mode-mock #cardsRowMock {
+  display: grid;
+}
+
+body.mode-mock #cardsRowMock {
+  display: flex;
+}
+
+body.mode-mock #emptyState {
+  display: none;
+}
+
+/* Live mode is the opposite */
+body.mode-live #buttonsGridMock,
+body.mode-live #cardsRowMock {
+  display: none;
+}
+
+body.mode-live #buttonsGrid {
+  display: grid;
+}
+
+body.mode-live #cardsRow {
+  display: flex;
+}
+
