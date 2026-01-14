@@ -12,7 +12,7 @@ class GPIOEvent:
 class GPIOManager:
     """
     Uses gpiozero when running on Raspberry Pi.
-    Falls back to a no op manager if gpiozero is unavailable.
+    Falls back to a no op manager if gpiozero is unavailable..
     """
     def __init__(
         self,
