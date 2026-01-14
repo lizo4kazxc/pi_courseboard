@@ -45,15 +45,20 @@ html, body {
 }
 
 .logo {
-  width: 54px;
-  height: 54px;
-  display: grid;
-  place-items: center;
-  background: var(--kdg-blue);
-  color: #fff;
-  font-weight: 800;
-  border-radius: 14px;
-  letter-spacing: 1px;
+  width: 170px;
+  height: 48px;
+  border-radius: 12px;
+
+  background: transparent;
+  background-image: url("/static/images/KdG-logo-V-zwart-rgb.png");
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: left center;
+
+  text-indent: -9999px;
+  overflow: hidden;
+
+  filter: invert(1) brightness(2);
 }
 
 .title { font-size: 18px; font-weight: 800; }

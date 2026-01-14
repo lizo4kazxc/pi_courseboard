@@ -13,4 +13,5 @@ PRESSES_LOG_PATH = LOG_DIR / "presses.log"
 ADMIN_USER = os.getenv("ADMIN_USER", "admin")
 ADMIN_PASS = os.getenv("ADMIN_PASS", "admin123")
 
-APP_TITLE = "KDG Course Board"
+APP_TITLE = "KdG Skillbox"
+
