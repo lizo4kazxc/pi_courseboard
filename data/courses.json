@@ -1,20 +1,83 @@
 [
   {
-    "course_id": "web-101",
-    "title": "Web Development",
-    "room": "B1.12",
-    "description": "Foundations of HTML, CSS, and JavaScript with practical labs.",
-    "overview": "Build a static site, then add interactivity and basic tooling.",
+    "course_id": "skill_graphic_design",
+    "title": "Graphic Design",
+    "room": "Skill 01",
+    "description": "Visual identity, layout, typography, branding basics for clear communication.",
+    "overview": "Select if you want to show graphic design related projects and content.",
     "button_gpio_pin": 17,
     "image_path": ""
   },
   {
-    "course_id": "ux-201",
-    "title": "UX Design",
-    "room": "C2.05",
-    "description": "User research, wireframes, prototyping, and usability testing.",
-    "overview": "From problem framing to validated interface prototypes.",
+    "course_id": "skill_3d_design",
+    "title": "3D Design",
+    "room": "Skill 02",
+    "description": "3D modeling and scene building for products, environments, and concepts.",
+    "overview": "Select if you want to show 3D modeling and design focused work.",
     "button_gpio_pin": 27,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_3d_animation",
+    "title": "3D Animation",
+    "room": "Skill 03",
+    "description": "Animation principles, rigging basics, motion, timing, and storytelling in 3D.",
+    "overview": "Select if you want to show animated 3D work and motion pieces.",
+    "button_gpio_pin": 22,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_game_design",
+    "title": "Game Design",
+    "room": "Skill 04",
+    "description": "Gameplay systems, level design, mechanics, balance, and player experience.",
+    "overview": "Select if you want to show interactive and game design projects.",
+    "button_gpio_pin": 5,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_vfx",
+    "title": "VFX",
+    "room": "Skill 05",
+    "description": "Compositing, tracking, effects integration, and visual storytelling for film and media.",
+    "overview": "Select if you want to show visual effects work and breakdowns.",
+    "button_gpio_pin": 6,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_audio_video_postproduction",
+    "title": "Audio Video Postproduction",
+    "room": "Skill 06",
+    "description": "Editing, sound, color, finishing, and delivery for polished video content.",
+    "overview": "Select if you want to show editing and postproduction focused work.",
+    "button_gpio_pin": 13,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_fablab_experiences",
+    "title": "Fablab Experiences",
+    "room": "Skill 07",
+    "description": "Prototyping with digital fabrication, laser cutting, 3D printing, electronics basics.",
+    "overview": "Select if you want to show hands on maker and fabrication experiences.",
+    "button_gpio_pin": 19,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_business_essentials",
+    "title": "Business Essentials",
+    "room": "Skill 08",
+    "description": "Pitching, budgeting, planning, teamwork, and basic business thinking for creators.",
+    "overview": "Select if you want to show business oriented projects and skills.",
+    "button_gpio_pin": 26,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_ux_ui",
+    "title": "UX UI",
+    "room": "Skill 09",
+    "description": "User research, flows, wireframes, prototyping, usability, and interface design.",
+    "overview": "Select if you want to show UX and UI focused projects and processes.",
+    "button_gpio_pin": 20,
     "image_path": ""
   }
 ]
