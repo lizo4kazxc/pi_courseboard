@@ -47,8 +47,8 @@ html, body {
   box-shadow: var(--shadow);
   color: #fff;
 
-  /* UPDATED: keep content top-left */
-  align-items: flex-start;
+  /* UPDATED: center items vertically, but keep brand left */
+  align-items: center;
 }
 
 .topbar::after {
@@ -66,35 +66,34 @@ html, body {
 /* Left brand block */
 .brand {
   display: flex;
-  gap: 14px;
-
-  /* UPDATED: keep items aligned top */
-  align-items: flex-start;
+  align-items: center;
+  gap: 18px;          /* UPDATED: spacing from logo to text */
+  flex: 0 0 auto;     /* UPDATED: do not stretch and center the titles */
 }
 
-/* UPDATED: smaller logo container */
 .logo {
-  width: 140px;
-  height: 34px;
+  width: 450px;
+  height: 100px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   overflow: hidden;
 }
 
 .logo img {
-  max-width: 140px;
-  max-height: 34px;
+  max-width: 500px;
+  max-height: 120px;
   width: auto;
   height: auto;
   display: block;
   object-fit: contain;
 
-  /* keep this because the logo file is black */
+  /* logo is black; invert to show white on dark header */
   filter: invert(1) brightness(2);
 }
 
 .titles {
-  padding-top: 2px;
+  text-align: left;   /* UPDATED: no centering */
+  max-width: 520px;   /* UPDATED: keep lines readable */
 }
 
 .titles .title {
@@ -107,17 +106,16 @@ html, body {
 .titles .subtitle {
   margin-top: 4px;
   font-size: 12px;
-  color: rgba(255,255,255,0.72);
+  line-height: 1.25;                 /* UPDATED */
+  color: rgba(255,255,255,0.70);     /* UPDATED */
+  max-width: 520px;                  /* UPDATED */
 }
 
 /* Right controls */
 .status {
   display: flex;
   gap: 10px;
-
-  /* UPDATED: align top with brand */
-  align-items: flex-start;
-  padding-top: 2px;
+  align-items: center;
 }
 
 .pill {
@@ -298,7 +296,7 @@ html, body {
   bottom: -1px;
   height: 3px;
   border-radius: 999px;
-  background: rgba(0,91,169,0.18);
+  background: rgba(132, 169, 0, 0.18);
 }
 
 .cardTitle {
@@ -361,3 +359,4 @@ html, body {
   background: rgba(2, 6, 23, 0.02);
   display: none;
 }
+
