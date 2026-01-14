@@ -360,3 +360,125 @@ html, body {
   display: none;
 }
 
+/* Step banner */
+.stepBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 91, 169, 0.14);
+  background: linear-gradient(180deg, rgba(0, 91, 169, 0.05), rgba(255, 210, 0, 0.06));
+  margin-bottom: 12px;
+}
+
+.stepPill {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 950;
+  color: var(--kdg-blue-dark);
+  background: rgba(0, 91, 169, 0.10);
+  border: 1px solid rgba(0, 91, 169, 0.18);
+}
+
+.stepTitle {
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: 0.1px;
+}
+
+.stepSub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.25;
+}
+
+/* Mini selected skill cards */
+.miniCard {
+  flex: 0 0 320px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(2, 6, 23, 0.05);
+  scroll-snap-align: start;
+}
+
+.miniHead {
+  position: relative;
+  padding: 12px 12px 10px 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.miniHead::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(0, 91, 169, 0.18);
+}
+
+.miniTitle {
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.miniTag {
+  font-size: 11px;
+  font-weight: 950;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 91, 169, 0.10);
+  border: 1px solid rgba(0, 91, 169, 0.18);
+  color: var(--kdg-blue-dark);
+  flex: 0 0 auto;
+}
+
+.miniBody {
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.miniLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.miniLine .k {
+  color: var(--muted);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.18px;
+}
+
+.miniLine .v {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.miniImg {
+  margin-top: 4px;
+  height: 120px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 91, 169, 0.18);
+  background:
+    linear-gradient(135deg, rgba(0,91,169,0.08), rgba(255,210,0,0.08)),
+    repeating-linear-gradient(45deg, rgba(2,6,23,0.04) 0, rgba(2,6,23,0.04) 10px, rgba(2,6,23,0.02) 10px, rgba(2,6,23,0.02) 20px);
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: var(--kdg-blue-dark);
+}

@@ -1,20 +1,83 @@
 [
   {
-    "course_id": "web-101",
-    "title": "Web Development",
-    "room": "B1.12",
-    "description": "Foundations of HTML, CSS, and JavaScript with practical labs.",
-    "overview": "Build a static site, then add interactivity and basic tooling.",
+    "course_id": "skill_graphic_design",
+    "title": "Graphic Design",
+    "room": "Skill 01",
+    "description": "Visual identity, layout, typography, and branding fundamentals.",
+    "overview": "Select to include Graphic Design in your skill profile.",
     "button_gpio_pin": 17,
     "image_path": ""
   },
   {
-    "course_id": "ux-201",
-    "title": "UX Design",
-    "room": "C2.05",
-    "description": "User research, wireframes, prototyping, and usability testing.",
-    "overview": "From problem framing to validated interface prototypes.",
+    "course_id": "skill_3d_design",
+    "title": "3D Design",
+    "room": "Skill 02",
+    "description": "3D modeling and scene building for products, environments, and concepts.",
+    "overview": "Select to include 3D Design in your skill profile.",
     "button_gpio_pin": 27,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_3d_animation",
+    "title": "3D Animation",
+    "room": "Skill 03",
+    "description": "Animation principles, motion, timing, and storytelling in 3D.",
+    "overview": "Select to include 3D Animation in your skill profile.",
+    "button_gpio_pin": 22,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_game_design",
+    "title": "Game Design",
+    "room": "Skill 04",
+    "description": "Gameplay systems, mechanics, balance, and player experience.",
+    "overview": "Select to include Game Design in your skill profile.",
+    "button_gpio_pin": 5,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_vfx",
+    "title": "VFX",
+    "room": "Skill 05",
+    "description": "Compositing, tracking, and effects integration for film and media.",
+    "overview": "Select to include VFX in your skill profile.",
+    "button_gpio_pin": 6,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_audio_video_postproduction",
+    "title": "Audio Video Postproduction",
+    "room": "Skill 06",
+    "description": "Editing, sound, color, and finishing for polished video content.",
+    "overview": "Select to include Postproduction in your skill profile.",
+    "button_gpio_pin": 13,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_fablab_experiences",
+    "title": "Fablab Experiences",
+    "room": "Skill 07",
+    "description": "Prototyping with digital fabrication, 3D printing, and maker tools.",
+    "overview": "Select to include Fablab Experiences in your skill profile.",
+    "button_gpio_pin": 19,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_business_essentials",
+    "title": "Business Essentials",
+    "room": "Skill 08",
+    "description": "Pitching, planning, teamwork, and basic business thinking for creators.",
+    "overview": "Select to include Business Essentials in your skill profile.",
+    "button_gpio_pin": 26,
+    "image_path": ""
+  },
+  {
+    "course_id": "skill_ux_ui",
+    "title": "UX UI",
+    "room": "Skill 09",
+    "description": "User research, wireframes, prototyping, usability, and interface design.",
+    "overview": "Select to include UX UI in your skill profile.",
+    "button_gpio_pin": 20,
     "image_path": ""
   }
 ]

@@ -1,104 +1,148 @@
-  <!doctype html>
-  <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>KdG Skillbox</title>
-    <link rel="stylesheet" href="/static/css/style.css" />
-  </head>
-  <body>
-    <div class="app">
-      <header class="topbar">
-        <div class="brand">
-          <div class="logo">
-  <img src="/static/images/KdG-logo-V-zwart-rgb.png" alt="KdG" />
-</div>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KdG Skillbox</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
 
-          <div class="titles">
-            <div class="title">MCT Skillbox at KdG. Skills in, projects out. </div>
-            <div class="subtitle">Select your skills with the buttons. Confirm to explore projects.</div>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">
+          <img src="/static/images/KdG-logo-V-zwart-rgb.png" alt="KdG" />
+        </div>
+
+        <div class="titles">
+          <div class="title">MCT Skillbox at KdG. Skills in, projects out.</div>
+          <div class="subtitle">Select your skills with the buttons. Confirm to explore projects.</div>
+        </div>
+      </div>
+
+      <div class="status">
+        <div class="pill" id="wsStatus">Connecting</div>
+        <button class="btn secondary" id="clearBtn" type="button">Clear history</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="panel">
+        <h2>Skills</h2>
+
+        <div class="grid" id="buttonsGrid">
+          <div class="btnTile pressed">
+            <div class="pin">Skill 01</div>
+            <div class="label">Graphic Design</div>
+          </div>
+
+          <div class="btnTile">
+            <div class="pin">Skill 02</div>
+            <div class="label">3D Design</div>
+          </div>
+
+          <div class="btnTile">
+            <div class="pin">Skill 03</div>
+            <div class="label">3D Animation</div>
+          </div>
+
+          <div class="btnTile">
+            <div class="pin">Skill 04</div>
+            <div class="label">Game Design</div>
+          </div>
+
+          <div class="btnTile">
+            <div class="pin">Skill 05</div>
+            <div class="label">VFX</div>
+          </div>
+
+          <div class="btnTile">
+            <div class="pin">Skill 06</div>
+            <div class="label">Audio Video Postproduction</div>
+          </div>
+
+          <div class="btnTile">
+            <div class="pin">Skill 07</div>
+            <div class="label">Fablab Experiences</div>
+          </div>
+
+          <div class="btnTile">
+            <div class="pin">Skill 08</div>
+            <div class="label">Business Essentials</div>
+          </div>
+
+          <div class="btnTile enter">
+            <div class="pin">Confirm</div>
+            <div class="label">Confirm Selection</div>
           </div>
         </div>
 
-        <div class="status">
-          <div class="pill" id="wsStatus">Connecting</div>
-          <button class="btn secondary" id="clearBtn" type="button">Clear history</button>
-        </div>
-      </header>
+        <div class="hint" id="hintLine"></div>
+      </section>
 
-      <main class="content">
-        <section class="panel">
-          <h2>Skills</h2>
-          <div class="grid" id="buttonsGrid">
-  <!-- Static mock for styling. Later JS can overwrite this -->
-  <div class="btnTile pressed">
-    <div class="pin">Skill 01</div>
-    <div class="label">Graphic Design</div>
-   
-  </div>
+      <section class="panel">
+        <h2>Selected skills</h2>
 
-  <div class="btnTile">
-    <div class="pin">Skill 02</div>
-    <div class="label">3D Design</div>
-
-  </div>
-
-  <div class="btnTile">
-    <div class="pin">Skill 03</div>
-    <div class="label">3D Animation</div>
-   
-  </div>
-
-  <div class="btnTile">
-    <div class="pin">Skill 04</div>
-    <div class="label">Game Design</div>
-   
-  </div>
-
-  <div class="btnTile">
-    <div class="pin">Skill 05</div>
-    <div class="label">VFX</div>
- 
-  </div>
-
-  <div class="btnTile">
-    <div class="pin">Skill 06</div>
-    <div class="label">Audio Video Postproduction</div>
-    
-  </div>
-
-  <div class="btnTile">
-    <div class="pin">Skill 07</div>
-    <div class="label">Fablab Experiences</div>
-    
-  </div>
-
-  <div class="btnTile">
-    <div class="pin">Skill 08</div>
-    <div class="label">Business Essentials</div>
-    
-  </div>
-
-  <div class="btnTile enter">
-    <div class="pin">Confirm</div>
-    <div class="label">Confirm Selection</div>
-    
-  </div>
-</div>
-
-          <div class="hint" id="hintLine"></div>
-        </section>
-
-        <section class="panel">
-          <h2>Selected courses</h2>
-          <div class="scrollRow" id="cardsRow"></div>
-          <div class="emptyState" id="emptyState">
-            Press a course button to add it here. Use the Enter button or Clear history.
+        <div class="stepBanner">
+          <div class="stepPill">Step 1 of 3</div>
+          <div class="stepText">
+            <div class="stepTitle">Select your skills</div>
+            <div class="stepSub">Press skill buttons to toggle. Press Confirm to continue.</div>
           </div>
-        </section>
-      </main>
-    </div>
+        </div>
 
-    <script src="/static/js/app.js"></script>
-  </body>
-  </html>
+        <div class="scrollRow" id="cardsRow">
+          <div class="mockCard">
+            <div class="miniCard">
+              <div class="miniHead">
+                <div class="miniTitle">Graphic Design</div>
+                <div class="miniTag">Selected</div>
+              </div>
+              <div class="miniBody">
+                <div class="miniLine"><span class="k">Focus</span><span class="v">Branding and layout</span></div>
+                <div class="miniLine"><span class="k">Next</span><span class="v">Projects preview</span></div>
+                <div class="miniImg">Image placeholder</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mockCard">
+            <div class="miniCard">
+              <div class="miniHead">
+                <div class="miniTitle">UX UI</div>
+                <div class="miniTag">Selected</div>
+              </div>
+              <div class="miniBody">
+                <div class="miniLine"><span class="k">Focus</span><span class="v">Flows and prototypes</span></div>
+                <div class="miniLine"><span class="k">Next</span><span class="v">Projects preview</span></div>
+                <div class="miniImg">Image placeholder</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mockCard">
+            <div class="miniCard">
+              <div class="miniHead">
+                <div class="miniTitle">VFX</div>
+                <div class="miniTag">Selected</div>
+              </div>
+              <div class="miniBody">
+                <div class="miniLine"><span class="k">Focus</span><span class="v">Compositing and effects</span></div>
+                <div class="miniLine"><span class="k">Next</span><span class="v">Projects preview</span></div>
+                <div class="miniImg">Image placeholder</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="emptyState" id="emptyState">
+          No skills selected yet. Use the buttons on the left.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
