@@ -1,4 +1,6 @@
 {
   "course_pins": [17, 27, 22, 5, 6, 13, 19, 26],
+  "clear_key": "enter",
   "clear_pin": 21
+
 }

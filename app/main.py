@@ -20,6 +20,11 @@ from .config import (
 from .gpio_manager import GPIOEvent, GPIOManager
 from .models import Course
 from .storage import JSONStorage
+from .keyboard_manager import KeyboardManager
+import json
+
+USE_KEYBOARD_SIM = True  # toggle this
+
 
 app = FastAPI(title=APP_TITLE)
 
@@ -141,6 +146,7 @@ def on_gpio_event(evt: GPIOEvent) -> None:
 async def startup() -> None:
     global course_by_pin, clear_pin, course_pins, event_loop, gpio
 
+
     event_loop = asyncio.get_running_loop()
 
     gpio_map = storage.load_gpio_map()
@@ -151,6 +157,17 @@ async def startup() -> None:
 
     gpio = GPIOManager(course_pins=course_pins, clear_pin=clear_pin, on_event=on_gpio_event)
     gpio.start()
+    
+    if USE_KEYBOARD_SIM:
+    key_map_path = BASE_DIR / "data" / "key_map.json"
+    key_map = json.loads(key_map_path.read_text())
+
+    keyboard = KeyboardManager(
+        key_to_pin=key_map["course_keys"],
+        clear_key=key_map["clear_key"],
+        on_event=on_gpio_event,
+    )
+    keyboard.start()
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
