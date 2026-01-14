@@ -9,6 +9,10 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from pathlib import Path
+BASE_DIR = Path(__file__).parent.parent.resolve()
+
+
 from .config import (
     APP_TITLE,
     ADMIN_PASS,
@@ -157,7 +161,7 @@ async def startup() -> None:
 
     gpio = GPIOManager(course_pins=course_pins, clear_pin=clear_pin, on_event=on_gpio_event)
     gpio.start()
-    
+
     if USE_KEYBOARD_SIM:
     key_map_path = BASE_DIR / "data" / "key_map.json"
     key_map = json.loads(key_map_path.read_text())
@@ -168,6 +172,7 @@ async def startup() -> None:
         on_event=on_gpio_event,
     )
     keyboard.start()
+
 
 @app.on_event("shutdown")
 async def shutdown() -> None:

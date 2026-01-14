@@ -1,4 +1,4 @@
-let ws = null;
+plet ws = null;
 let state = {
   courses: [],
   pressed_pins: [],
