@@ -482,3 +482,71 @@ html, body {
   font-weight: 900;
   color: var(--kdg-blue-dark);
 }
+
+/* Mode banner (state machine) */
+.modeBanner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 91, 169, 0.14);
+  background: linear-gradient(180deg, rgba(0, 91, 169, 0.05), rgba(255, 210, 0, 0.06));
+  margin-bottom: 12px;
+}
+
+.modeLeft {
+  display: grid;
+  gap: 4px;
+}
+
+.modePill {
+  width: fit-content;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 950;
+  color: var(--kdg-blue-dark);
+  background: rgba(0, 91, 169, 0.10);
+  border: 1px solid rgba(0, 91, 169, 0.18);
+}
+
+.modeTitle {
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: 0.1px;
+}
+
+.modeSub {
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--muted);
+  max-width: 560px;
+}
+
+.modeRight {
+  flex: 0 0 auto;
+}
+
+.modeHint {
+  font-size: 12px;
+  font-weight: 900;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.03);
+  border: 1px solid rgba(2, 6, 23, 0.06);
+  color: var(--text);
+}
+
+/* Optional variants you can apply later by changing class on modeBanner */
+.modeBanner.is-projects {
+  border-color: rgba(255, 210, 0, 0.45);
+  background: linear-gradient(180deg, rgba(255, 210, 0, 0.10), rgba(0, 91, 169, 0.04));
+}
+
+.modeBanner.is-done {
+  border-color: rgba(22, 163, 74, 0.25);
+  background: linear-gradient(180deg, rgba(22, 163, 74, 0.07), rgba(2, 6, 23, 0.02));
+}
