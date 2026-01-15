@@ -6,6 +6,34 @@ let state = {
   clear_pin: null,
 };
 
+const selectedSkills = document.getElementById("cardsRow");
+
+const skillsMap = {
+  "1": "Graphic Design",
+  "2": "3D Design",
+  "3": "VFX"
+};
+
+document.addEventListener("keydown", (e) => {
+  const skill = skillsMap[e.key];
+  if (!skill) return;
+
+  const existing = document.getElementById(skill);
+
+  if (existing) {
+    existing.remove();
+    return;
+  }
+
+  const card = document.createElement("div");
+  card.className = "miniCard";
+  card.id = skill;
+  card.textContent = skill + " selected";
+
+  selectedSkills.appendChild(card);
+});
+
+
 function qs(id) { return document.getElementById(id); }
 
 function setWsStatus(ok, text) {
