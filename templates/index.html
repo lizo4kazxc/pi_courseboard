@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 
-<body class="mode-mock">
+<body class="mode-live">
   <div class="app">
     <header class="topbar">
       <div class="brand">
@@ -17,13 +17,13 @@
 
         <div class="titles">
           <div class="title">MCT Skillbox at KdG. Skills in, projects out.</div>
-          <div class="subtitle">Select your skills with the buttons. Confirm to explore projects.</div>
+          <div class="subtitle">Press skill buttons to toggle selection. Press Confirm to continue.</div>
         </div>
       </div>
 
       <div class="status">
         <div class="pill" id="wsStatus">Connecting</div>
-        <button class="btn secondary" id="clearBtn" type="button">Clear history</button>
+        <button class="btn secondary" id="clearBtn" type="button">Reset</button>
       </div>
     </header>
 
@@ -31,56 +31,8 @@
       <section class="panel">
         <h2>Skills</h2>
 
-        <!-- LIVE container (Pi + JS will fill this later) -->
+        <!-- LIVE: JS fills this from data/courses.json -->
         <div class="grid" id="buttonsGrid"></div>
-
-        <!-- MOCK container (visual design now) -->
-        <div class="grid" id="buttonsGridMock">
-          <div class="btnTile pressed">
-            <div class="pin">Skill 01</div>
-            <div class="label">Graphic Design</div>
-          </div>
-
-          <div class="btnTile">
-            <div class="pin">Skill 02</div>
-            <div class="label">3D Design</div>
-          </div>
-
-          <div class="btnTile">
-            <div class="pin">Skill 03</div>
-            <div class="label">3D Animation</div>
-          </div>
-
-          <div class="btnTile">
-            <div class="pin">Skill 04</div>
-            <div class="label">Game Design</div>
-          </div>
-
-          <div class="btnTile">
-            <div class="pin">Skill 05</div>
-            <div class="label">VFX</div>
-          </div>
-
-          <div class="btnTile">
-            <div class="pin">Skill 06</div>
-            <div class="label">Audio Video Postproduction</div>
-          </div>
-
-          <div class="btnTile">
-            <div class="pin">Skill 07</div>
-            <div class="label">Fablab Experiences</div>
-          </div>
-
-          <div class="btnTile">
-            <div class="pin">Skill 08</div>
-            <div class="label">Business</div>
-          </div>
-
-          <div class="btnTile enter">
-            <div class="pin">Confirm</div>
-            <div class="label">Confirm Selection</div>
-          </div>
-        </div>
 
         <div class="hint" id="hintLine"></div>
       </section>
@@ -90,65 +42,25 @@
 
         <div class="modeBanner" id="modeBanner">
           <div class="modeLeft">
-            
+            <div class="modePill" id="modePill">Step 1</div>
             <div class="modeTitle" id="modeTitle">Select your skills</div>
             <div class="modeSub" id="modeSub">Press skill buttons to toggle. Press Confirm to continue.</div>
           </div>
 
           <div class="modeRight">
-            <div class="modeHint" id="modeHint">Confirm button: Continue</div>
+            <div class="modeHint" id="modeHint">Confirm button: continue</div>
           </div>
         </div>
 
-        <!-- LIVE container (Pi + JS will fill this later) -->
+        <!-- LIVE: JS appends selected cards here only after button presses -->
         <div class="scrollRow" id="cardsRow"></div>
 
-        <!-- MOCK container (visual design now) -->
-        <div class="scrollRow" id="cardsRowMock">
-          <div class="miniCard">
-            <div class="miniHead">
-              <div class="miniTitle">Graphic Design</div>
-              
-              <div class="miniTag">Selected</div>
-            </div>
-            <div class="miniBody">
-              <div class="miniLine"><span class="k">Focus</span><span class="v">Branding and layout</span></div>
-              <div class="miniLine"><span class="k">Next</span><span class="v">Projects preview</span></div>
-              <div class="miniImg">Image placeholder</div>
-            </div>
-          </div>
-
-          <div class="miniCard">
-            <div class="miniHead">
-              <div class="miniTitle">UX UI</div>
-              <div class="miniTag">Selected</div>
-            </div>
-            <div class="miniBody">
-              <div class="miniLine"><span class="k">Focus</span><span class="v">Flows and prototypes</span></div>
-              <div class="miniLine"><span class="k">Next</span><span class="v">Projects preview</span></div>
-              <div class="miniImg">Image placeholder</div>
-            </div>
-          </div>
-
-          <div class="miniCard">
-            <div class="miniHead">
-              <div class="miniTitle">VFX</div>
-              <div class="miniTag">Selected</div>
-            </div>
-            <div class="miniBody">
-              <div class="miniLine"><span class="k">Focus</span><span class="v">Compositing and effects</span></div>
-              <div class="miniLine"><span class="k">Next</span><span class="v">Projects preview</span></div>
-              <div class="miniImg">Image placeholder</div>
-            </div>
-          </div>
-        </div>
-
+        <!-- Visible until at least one selection exists -->
         <div class="emptyState" id="emptyState">
           No skills selected yet. Use the buttons on the left.
         </div>
 
         <div class="projectsArea" id="projectsArea">
-  
           <div class="projectsTitle">Projects</div>
           <div class="projectsEmpty">Projects will appear here after you confirm.</div>
         </div>

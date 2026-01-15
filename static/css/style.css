@@ -643,3 +643,7 @@ body.mode-live #cardsRow {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* Live mode should show the empty state until cards exist */
+body.mode-live #emptyState {
+  display: block;
+}
