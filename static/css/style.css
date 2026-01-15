@@ -495,6 +495,8 @@ html, body {
   border: 1px solid rgba(0, 91, 169, 0.14);
   background: linear-gradient(180deg, rgba(0, 91, 169, 0.05), rgba(255, 210, 0, 0.06));
   margin-bottom: 12px;
+
+  
 }
 
 .modeLeft {
@@ -633,5 +635,11 @@ body.mode-live #cardsRow {
   background: rgba(0, 91, 169, 0.10);
   border: 1px solid rgba(0, 91, 169, 0.18);
   color: var(--kdg-blue-dark);
+}
+
+/* Skills panel: 2-column grid instead of 3 */
+#buttonsGridMock,
+#buttonsGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
