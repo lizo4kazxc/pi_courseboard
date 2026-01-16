@@ -1,7 +1,7 @@
 import asyncio
 import base64
 from typing import Any, Dict, List, Optional, Set
-from .arduino_serial i;port ArduinoSerialManager
+from .arduino_serial import ArduinoSerialManager
 
 from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import HTMLResponse, JSONResponse
