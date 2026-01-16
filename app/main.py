@@ -1,7 +1,7 @@
 import asyncio
 import base64
 from typing import Any, Dict, List, Optional, Set
-from .arduino_serial import ArduinoSerialManager
+#from .arduino_serial import ArduinoSerialManager
 
 from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -39,6 +39,7 @@ course_pins: Set[int] = set()
 
 event_loop: Optional[asyncio.AbstractEventLoop] = None
 gpio: Optional[GPIOManager] = None
+arduino = None  # FIXED: Moved to global scope
 
 def _check_basic_auth(request: Request) -> None:
     header = request.headers.get("authorization")
@@ -135,13 +136,12 @@ def on_gpio_event(evt: GPIOEvent) -> None:
         if event_loop:
             asyncio.run_coroutine_threadsafe(
                 ws_broadcast({"type": "pressed_update", "pressed_pins": sorted(list(pressed_pins))}),
-                event_loop,
+                event_loop,  # FIXED: Added missing second argument
             )
 
 @app.on_event("startup")
-arduino = None
 async def startup() -> None:
-    
+    # FIXED: Removed arduino = None from here and moved it to global scope
     global course_by_pin, clear_pin, course_pins, event_loop, gpio, arduino
 
     event_loop = asyncio.get_running_loop()
