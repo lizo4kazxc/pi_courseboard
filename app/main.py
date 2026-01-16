@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 import asyncio
 import base64
 from typing import Any, Dict, List, Optional, Set
+from .arduino_serial i;port ArduinoSerialManager
 
 from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -98,7 +97,7 @@ def _state_payload() -> Dict[str, Any]:
     }
 
 def on_gpio_event(evt: GPIOEvent) -> None:
-    global pressed_pins
+    global pressed_pins, clear_pin, event_loop
 
     pin = evt.gpio_pin
     kind = evt.kind
@@ -113,7 +112,9 @@ def on_gpio_event(evt: GPIOEvent) -> None:
                 asyncio.run_coroutine_threadsafe(ws_broadcast({"type": "history_cleared"}), event_loop)
         else:
             course = _course_for_pin(pin)
-            storage.log_press(pin, course.course_id if course else None, "button_down")
+            # FIXED: Check if course is not None before accessing course_id
+            course_id = course.course_id if course else None
+            storage.log_press(pin, course_id, "button_down")
             if course:
                 history_course_ids.append(course.course_id)
                 if event_loop:
@@ -138,8 +139,10 @@ def on_gpio_event(evt: GPIOEvent) -> None:
             )
 
 @app.on_event("startup")
+arduino = None
 async def startup() -> None:
-    global course_by_pin, clear_pin, course_pins, event_loop, gpio
+    
+    global course_by_pin, clear_pin, course_pins, event_loop, gpio, arduino
 
     event_loop = asyncio.get_running_loop()
 
