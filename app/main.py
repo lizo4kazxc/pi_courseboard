@@ -1,7 +1,6 @@
 import asyncio
 import base64
 from typing import Any, Dict, List, Optional, Set
-#from .arduino_serial import ArduinoSerialManager
 
 from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -15,10 +14,13 @@ from .config import (
     COURSES_PATH,
     GPIO_MAP_PATH,
     PRESSES_LOG_PATH,
+    BACKEND_CONFIG_PATH,
+    DEFAULT_BACKEND,
+    InputBackend
 )
-from .gpio_manager import GPIOEvent, GPIOManager
-from .models import Course
+from .models import Course, ArduinoConfig
 from .storage import JSONStorage
+from .input_manager import InputManager, InputEvent  # NEW
 
 app = FastAPI(title=APP_TITLE)
 
@@ -37,34 +39,10 @@ course_by_pin: Dict[int, Course] = {}
 clear_pin: Optional[int] = None
 course_pins: Set[int] = set()
 
-event_loop: Optional[asyncio.AbstractEventLoop] = None
-gpio: Optional[GPIOManager] = None
-arduino = None  # FIXED: Moved to global scope
+input_manager: Optional[InputManager] = None  # NEW: Replace gpio/arduino managers
 
 def _check_basic_auth(request: Request) -> None:
-    header = request.headers.get("authorization")
-    if not header or not header.lower().startswith("basic "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    try:
-        b64 = header.split(" ", 1)[1].strip()
-        decoded = base64.b64decode(b64).decode("utf-8")
-        username, password = decoded.split(":", 1)
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication header",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    if username != ADMIN_USER or password != ADMIN_PASS:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+    # ... (keep existing code) ...
 
 def require_admin(request: Request):
     _check_basic_auth(request)
@@ -89,78 +67,99 @@ def _reset_history() -> None:
 
 def _state_payload() -> Dict[str, Any]:
     courses = storage.load_courses()
+    
+    # Get backend info if available
+    backend_info = {}
+    if input_manager:
+        backend_info = input_manager.get_backend_info()
+    
     return {
         "type": "state",
         "pressed_pins": sorted(list(pressed_pins)),
         "history_course_ids": list(history_course_ids),
         "courses": [c.model_dump() for c in courses],
         "clear_pin": clear_pin,
+        "backend": backend_info  # NEW: Include backend info
     }
 
-def on_gpio_event(evt: GPIOEvent) -> None:
-    global pressed_pins, clear_pin, event_loop
-
-    pin = evt.gpio_pin
-    kind = evt.kind
-
+def on_input_event(event: InputEvent) -> None:  # UPDATED: Changed from on_gpio_event
+    global pressed_pins, clear_pin
+    
+    pin = event.pin
+    kind = event.kind
+    
+    print(f"Input event: pin={pin}, kind={kind}, source={event.source}")
+    
     if kind == "down":
         pressed_pins.add(pin)
 
         if clear_pin is not None and pin == clear_pin:
-            storage.log_press(pin, None, "clear_down")
+            storage.log_press(pin, None, f"clear_down_{event.source}")
             _reset_history()
-            if event_loop:
-                asyncio.run_coroutine_threadsafe(ws_broadcast({"type": "history_cleared"}), event_loop)
+            asyncio.create_task(ws_broadcast({"type": "history_cleared"}))
         else:
             course = _course_for_pin(pin)
-            # FIXED: Check if course is not None before accessing course_id
             course_id = course.course_id if course else None
-            storage.log_press(pin, course_id, "button_down")
+            storage.log_press(pin, course_id, f"button_down_{event.source}")
             if course:
                 history_course_ids.append(course.course_id)
-                if event_loop:
-                    asyncio.run_coroutine_threadsafe(
-                        ws_broadcast({"type": "course_added", "course": course.model_dump()}),
-                        event_loop,
-                    )
+                asyncio.create_task(ws_broadcast({
+                    "type": "course_added", 
+                    "course": course.model_dump()
+                }))
 
-        if event_loop:
-            asyncio.run_coroutine_threadsafe(
-                ws_broadcast({"type": "pressed_update", "pressed_pins": sorted(list(pressed_pins))}),
-                event_loop,
-            )
+        asyncio.create_task(ws_broadcast({
+            "type": "pressed_update", 
+            "pressed_pins": sorted(list(pressed_pins))
+        }))
 
     elif kind == "up":
         pressed_pins.discard(pin)
-        storage.log_press(pin, None, "button_up")
-        if event_loop:
-            asyncio.run_coroutine_threadsafe(
-                ws_broadcast({"type": "pressed_update", "pressed_pins": sorted(list(pressed_pins))}),
-                event_loop,  # FIXED: Added missing second argument
-            )
+        storage.log_press(pin, None, f"button_up_{event.source}")
+        asyncio.create_task(ws_broadcast({
+            "type": "pressed_update", 
+            "pressed_pins": sorted(list(pressed_pins))
+        }))
 
 @app.on_event("startup")
 async def startup() -> None:
-    # FIXED: Removed arduino = None from here and moved it to global scope
-    global course_by_pin, clear_pin, course_pins, event_loop, gpio, arduino
-
-    event_loop = asyncio.get_running_loop()
-
+    global course_by_pin, clear_pin, course_pins, input_manager
+    
+    # Load GPIO map (still needed for pin assignments)
     gpio_map = storage.load_gpio_map()
     clear_pin = gpio_map.clear_pin
     course_pins = set(gpio_map.course_pins)
-
+    
+    # Load courses
     course_by_pin = storage.get_courses_by_pin()
-
-    gpio = GPIOManager(course_pins=course_pins, clear_pin=clear_pin, on_event=on_gpio_event)
-    gpio.start()
+    
+    # Load Arduino config if needed
+    arduino_config = None
+    if DEFAULT_BACKEND == InputBackend.ARDUINO:
+        try:
+            arduino_config = storage.load_arduino_config()
+        except Exception as e:
+            print(f"Could not load Arduino config, using defaults: {e}")
+            arduino_config = ArduinoConfig()
+    
+    # Create and start input manager
+    input_manager = InputManager(
+        backend=DEFAULT_BACKEND,
+        course_pins=course_pins,
+        clear_pin=clear_pin,
+        on_event=on_input_event,
+        arduino_config=arduino_config
+    )
+    
+    await input_manager.start()
+    print(f"Input manager started with backend: {DEFAULT_BACKEND.value}")
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
-    global gpio
-    if gpio:
-        gpio.stop()
-        gpio = None
+    global input_manager
+    if input_manager:
+        await input_manager.stop()
+        input_manager = None
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -239,3 +238,68 @@ async def websocket_endpoint(ws: WebSocket):
     finally:
         async with ws_lock:
             ws_clients.discard(ws)
+
+@app.get("/api/admin/arduino-config")
+async def get_arduino_config(ok: bool = Depends(require_admin)):
+    try:
+        config = storage.load_arduino_config()
+        return config.model_dump()
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to load Arduino config: {str(e)}"}
+        )
+
+@app.post("/api/admin/arduino-config")
+async def update_arduino_config(config: ArduinoConfig, ok: bool = Depends(require_admin)):
+    try:
+        storage.save_arduino_config(config)
+        
+        # Restart input manager if using Arduino backend
+        if input_manager and input_manager.backend == InputBackend.ARDUINO:
+            await input_manager.stop()
+            input_manager.arduino_config = config
+            await input_manager.start()
+            
+        return {"ok": True, "message": "Arduino configuration updated"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to update Arduino config: {str(e)}"}
+        )
+@app.post("/api/admin/change-backend")
+async def change_backend(backend: InputBackend, ok: bool = Depends(require_admin)):
+    global input_manager
+    
+    try:
+        if input_manager:
+            await input_manager.stop()
+        
+        # Reload with new backend
+        arduino_config = None
+        if backend == InputBackend.ARDUINO:
+            arduino_config = storage.load_arduino_config()
+            
+        input_manager = InputManager(
+            backend=backend,
+            course_pins=course_pins,
+            clear_pin=clear_pin,
+            on_event=on_input_event,
+            arduino_config=arduino_config
+        )
+        
+        await input_manager.start()
+        
+        # Update environment or config file to persist the change
+        # (You might want to save this to a config file)
+        
+        return {
+            "ok": True, 
+            "message": f"Backend changed to {backend.value}",
+            "backend_info": input_manager.get_backend_info()
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to change backend: {str(e)}"}
+        )
