@@ -17,7 +17,7 @@
 
         <div class="titles">
           <div class="title">MCT Skillbox at KdG. Skills in, projects out.</div>
-          <div class="subtitle">Press skill buttons to toggle selection. Press Confirm to continue.</div>
+          <div class="subtitle">Press skill buttons to toggle selection.</div>
         </div>
       </div>
 
@@ -32,9 +32,7 @@
         <h2>Skills</h2>
 
         <!-- LIVE: JS fills this from data/courses.json -->
-        <div class="grid" id="buttonsGrid"></div>
-
-        <div class="hint" id="hintLine"></div>
+        <div class="skillsRows" id="buttonsGrid"></div>
       </section>
 
       <section class="panel">
@@ -57,14 +55,38 @@
 
         <!-- Visible until at least one selection exists -->
         <div class="emptyState" id="emptyState">
-          No skills selected yet. Use the buttons on the left.
-        </div>
-
-        <div class="projectsArea" id="projectsArea">
-          <div class="projectsTitle">Projects</div>
-          <div class="projectsEmpty">Projects will appear here after you confirm.</div>
+          No skills selected yet. Use the buttons to select skills.
         </div>
       </section>
+    </main>
+
+    <!-- Full-screen projects step, shown after Confirm -->
+    <main class="projectsFullscreen" id="projectsFullscreen">
+      <div class="projectsFullscreenHeader">
+        <h2>Projects</h2>
+        <div class="projectsHeaderRight">
+          <div class="projectsProgress" id="projectsProgress"></div>
+          <div class="projectsIdleHint" id="projectsIdleHint"></div>
+          <div class="projectsExitHint">Press confirm to exit</div>
+        </div>
+      </div>
+
+      <div class="projectPlayer" id="projectPlayer">
+        <div class="projectPlayerMain">
+          <div class="projectPlayerImage imagePh" id="projectPlayerImage">Image placeholder</div>
+          <div class="projectPictureDots" id="projectPictureDots"></div>
+        </div>
+
+        <div class="projectPlayerSide">
+          <h3 class="projectPlayerTitle" id="projectPlayerTitle"></h3>
+          <div class="cardBlock">
+            <div class="k">Placeholder project</div>
+            <div class="v" id="projectPlayerDesc"></div>
+          </div>
+          <div class="projectSkills" id="projectPlayerSkills"></div>
+          <div class="projectNextUp" id="projectNextUp"></div>
+        </div>
+      </div>
     </main>
   </div>
 

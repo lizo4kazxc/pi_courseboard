@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">KDG</div>
+        <div class="titles">
+          <div class="title">{{ title }}</div>
+          <div class="subtitle">Aggregated from logs/presses.log. No personal data is recorded.</div>
+        </div>
+      </div>
+      <div class="status">
+        <a class="btn secondary" href="/admin" style="text-decoration:none; display:inline-block;">Back to admin</a>
+      </div>
+    </header>
+
+    <main class="content" style="margin-top:16px;">
+      <section class="panel">
+        <h2>Overview</h2>
+        <div class="insightsGrid" id="insightsGrid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Most-pressed skills</h2>
+        <div id="skillsBars"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/js/admin_insights.js"></script>
+</body>
+</html>

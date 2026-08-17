@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 # Import models
-from .models import GPIOMap, Course, ArduinoConfig
+from .models import GPIOMap, Course, ArduinoConfig, Project
 
 class JSONStorage:
     def __init__(self, courses_path, gpio_map_path, presses_log_path):
@@ -184,9 +184,29 @@ class JSONStorage:
     def save_arduino_config(self, config: ArduinoConfig) -> None:
         arduino_config_path = self.courses_path.parent / "arduino_config.json"
         arduino_config_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(arduino_config_path, "w") as f:
             if hasattr(config, 'model_dump_json'):
                 f.write(config.model_dump_json(indent=2))
             else:
                 f.write(config.json(indent=2))
+
+    def load_projects(self) -> List[Project]:
+        """Load placeholder projects that combine multiple skills/courses."""
+        projects_path = self.courses_path.parent / "projects.json"
+
+        if not projects_path.exists():
+            return []
+
+        with open(projects_path, "r") as f:
+            data = json.load(f)
+
+        projects = []
+        for item in data:
+            try:
+                project = Project.model_validate(item)
+                projects.append(project)
+            except Exception as e:
+                print(f"Error loading project {item.get('project_id', 'unknown')}: {e}")
+
+        return projects

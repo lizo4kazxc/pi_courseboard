@@ -18,7 +18,7 @@ from .config import (
     DEFAULT_BACKEND,
     InputBackend
 )
-from .models import Course, ArduinoConfig
+from .models import Course, ArduinoConfig, SimulatedPress, Project
 from .storage import JSONStorage
 from .input_manager import InputManager, InputEvent  # NEW
 
@@ -34,6 +34,9 @@ ws_lock = asyncio.Lock()
 
 pressed_pins: Set[int] = set()
 history_course_ids: List[str] = []
+confirmed: bool = False
+project_sequence: List[str] = []
+project_index: int = 0
 
 course_by_pin: Dict[int, Course] = {}
 clear_pin: Optional[int] = None
@@ -42,7 +45,29 @@ course_pins: Set[int] = set()
 input_manager: Optional[InputManager] = None  # NEW: Replace gpio/arduino managers
 
 def _check_basic_auth(request: Request) -> None:
-    # ... (keep existing code) ...
+    header = request.headers.get("authorization")
+    if not header or not header.lower().startswith("basic "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    try:
+        b64 = header.split(" ", 1)[1].strip()
+        decoded = base64.b64decode(b64).decode("utf-8")
+        username, password = decoded.split(":", 1)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication header",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    if username != ADMIN_USER or password != ADMIN_PASS:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
 def require_admin(request: Request):
     _check_basic_auth(request)
@@ -63,53 +88,102 @@ def _course_for_pin(pin: int) -> Optional[Course]:
     return course_by_pin.get(pin)
 
 def _reset_history() -> None:
+    global confirmed, project_sequence, project_index
     history_course_ids.clear()
+    confirmed = False
+    project_sequence = []
+    project_index = 0
+
+def _matching_project_ids() -> List[str]:
+    """Projects sharing >=1 skill with the current selection, best match first."""
+    selected = set(history_course_ids)
+    projects = storage.load_projects()
+    scored = [
+        (project, len(set(project.skill_ids) & selected))
+        for project in projects
+    ]
+    scored = [(project, score) for project, score in scored if score > 0]
+    scored.sort(key=lambda item: item[1], reverse=True)
+    return [project.project_id for project, _ in scored]
 
 def _state_payload() -> Dict[str, Any]:
     courses = storage.load_courses()
-    
+    projects = storage.load_projects()
+
     # Get backend info if available
     backend_info = {}
     if input_manager:
         backend_info = input_manager.get_backend_info()
-    
+
     return {
         "type": "state",
         "pressed_pins": sorted(list(pressed_pins)),
         "history_course_ids": list(history_course_ids),
         "courses": [c.model_dump() for c in courses],
+        "projects": [p.model_dump() for p in projects],
         "clear_pin": clear_pin,
+        "confirmed": confirmed,
+        "project_sequence": list(project_sequence),
+        "project_index": project_index,
         "backend": backend_info  # NEW: Include backend info
     }
 
 def on_input_event(event: InputEvent) -> None:  # UPDATED: Changed from on_gpio_event
-    global pressed_pins, clear_pin
-    
+    global pressed_pins, clear_pin, confirmed, project_sequence, project_index
+
     pin = event.pin
     kind = event.kind
-    
+
     print(f"Input event: pin={pin}, kind={kind}, source={event.source}")
-    
+
     if kind == "down":
         pressed_pins.add(pin)
 
         if clear_pin is not None and pin == clear_pin:
-            storage.log_press(pin, None, f"clear_down_{event.source}")
-            _reset_history()
-            asyncio.create_task(ws_broadcast({"type": "history_cleared"}))
-        else:
+            if not confirmed and len(history_course_ids) >= 1:
+                # Confirm: move from skill selection to the projects step.
+                confirmed = True
+                project_sequence = _matching_project_ids()
+                project_index = 0
+                storage.log_press(pin, None, f"confirm_down_{event.source}")
+                asyncio.create_task(ws_broadcast({
+                    "type": "confirmed",
+                    "project_sequence": list(project_sequence),
+                    "project_index": project_index,
+                }))
+            elif confirmed and project_index < len(project_sequence) - 1:
+                # Not on the last project yet: advance instead of exiting.
+                project_index += 1
+                storage.log_press(pin, None, f"project_advance_{event.source}")
+                asyncio.create_task(ws_broadcast({
+                    "type": "project_advanced",
+                    "project_index": project_index,
+                }))
+            else:
+                # Either exiting from the last project, or clearing an empty selection.
+                storage.log_press(pin, None, f"clear_down_{event.source}")
+                _reset_history()
+                asyncio.create_task(ws_broadcast({"type": "history_cleared"}))
+        elif not confirmed:
             course = _course_for_pin(pin)
             course_id = course.course_id if course else None
             storage.log_press(pin, course_id, f"button_down_{event.source}")
             if course:
-                history_course_ids.append(course.course_id)
-                asyncio.create_task(ws_broadcast({
-                    "type": "course_added", 
-                    "course": course.model_dump()
-                }))
+                if course.course_id in history_course_ids:
+                    history_course_ids.remove(course.course_id)
+                    asyncio.create_task(ws_broadcast({
+                        "type": "course_removed",
+                        "course_id": course.course_id
+                    }))
+                else:
+                    history_course_ids.append(course.course_id)
+                    asyncio.create_task(ws_broadcast({
+                        "type": "course_added",
+                        "course": course.model_dump()
+                    }))
 
         asyncio.create_task(ws_broadcast({
-            "type": "pressed_update", 
+            "type": "pressed_update",
             "pressed_pins": sorted(list(pressed_pins))
         }))
 
@@ -168,11 +242,25 @@ async def index(request: Request):
         {"request": request, "title": APP_TITLE},
     )
 
+@app.get("/attract", response_class=HTMLResponse)
+async def attract_page(request: Request):
+    return templates.TemplateResponse(
+        "attract.html",
+        {"request": request, "title": APP_TITLE},
+    )
+
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request, ok: bool = Depends(require_admin)):
     return templates.TemplateResponse(
         "admin.html",
         {"request": request, "title": f"{APP_TITLE} Admin"},
+    )
+
+@app.get("/admin/insights", response_class=HTMLResponse)
+async def admin_insights_page(request: Request, ok: bool = Depends(require_admin)):
+    return templates.TemplateResponse(
+        "admin_insights.html",
+        {"request": request, "title": f"{APP_TITLE} Insights"},
     )
 
 @app.get("/api/state")
@@ -212,12 +300,86 @@ async def delete_course(course_id: str, ok: bool = Depends(require_admin)):
 @app.post("/api/clear")
 async def clear_history():
     _reset_history()
+    storage.log_press(clear_pin if clear_pin is not None else -1, None, "reset_via_api")
     await ws_broadcast({"type": "history_cleared"})
+    return {"ok": True}
+
+@app.post("/api/debug/press")
+async def simulate_press(body: SimulatedPress):
+    if body.kind not in ("down", "up"):
+        raise HTTPException(status_code=400, detail="kind must be 'down' or 'up'")
+    on_input_event(InputEvent(
+        pin=body.pin,
+        kind=body.kind,
+        source="keyboard",
+        timestamp=asyncio.get_event_loop().time(),
+    ))
     return {"ok": True}
 
 def _reload_courses_cache() -> None:
     global course_by_pin
     course_by_pin = storage.get_courses_by_pin()
+
+def _compute_insights() -> Dict[str, Any]:
+    """Aggregate stats from logs/presses.log: top skills, funnel counts."""
+    log = storage.load_presses_log()
+    course_titles = {c.course_id: c.title for c in storage.load_courses()}
+
+    skill_press_counts: Dict[str, int] = {}
+    sessions_confirmed = 0
+    sessions_finished = 0
+    sessions_abandoned_mid_selection = 0
+    project_advances = 0
+
+    in_session = False
+    had_selection_before_reset = False
+
+    for entry in log:
+        event_type = entry.get("event_type", "")
+        course_id = entry.get("course_id")
+
+        if event_type.startswith("button_down_") and course_id:
+            skill_press_counts[course_id] = skill_press_counts.get(course_id, 0) + 1
+            had_selection_before_reset = True
+        elif event_type.startswith("confirm_down_"):
+            sessions_confirmed += 1
+            in_session = True
+        elif event_type.startswith("project_advance_"):
+            project_advances += 1
+        elif event_type.startswith("clear_down_") or event_type == "reset_via_api":
+            if in_session:
+                sessions_finished += 1
+            elif had_selection_before_reset:
+                sessions_abandoned_mid_selection += 1
+            in_session = False
+            had_selection_before_reset = False
+
+    top_skills = sorted(
+        (
+            {"course_id": cid, "title": course_titles.get(cid, cid), "presses": count}
+            for cid, count in skill_press_counts.items()
+        ),
+        key=lambda x: x["presses"],
+        reverse=True,
+    )
+
+    avg_projects_viewed = None
+    if sessions_confirmed:
+        avg_projects_viewed = round((project_advances + sessions_confirmed) / sessions_confirmed, 2)
+
+    return {
+        "total_button_presses": sum(skill_press_counts.values()),
+        "top_skills": top_skills,
+        "sessions_confirmed": sessions_confirmed,
+        "sessions_finished": sessions_finished,
+        "sessions_abandoned_mid_selection": sessions_abandoned_mid_selection,
+        "avg_projects_viewed_per_session": avg_projects_viewed,
+        "log_entries_analyzed": len(log),
+    }
+
+@app.get("/api/admin/insights")
+async def get_insights(ok: bool = Depends(require_admin)):
+    return _compute_insights()
 
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):

@@ -77,7 +77,7 @@
     "room": "Skill 09",
     "description": "User research, wireframes, prototyping, usability, and interface design.",
     "overview": "Select to include UX UI in your skill profile.",
-    "button_gpio_pin": 20,
+    "button_gpio_pin": 21,
     "image_path": ""
   }
 ]
