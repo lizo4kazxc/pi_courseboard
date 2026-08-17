@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import time
 from dataclasses import dataclass
 from typing import Callable, Dict, Optional, Set
@@ -28,6 +29,7 @@ class GPIOManager:
 
         self._buttons: Dict[int, object] = {}
         self._last_down: Dict[int, float] = {}
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
 
     def start(self) -> None:
         try:
@@ -35,6 +37,11 @@ class GPIOManager:
         except Exception:
             print("gpiozero not available, GPIO disabled")
             return
+
+        # gpiozero fires when_pressed/when_released from its own monitoring
+        # thread, not this one. Remember the loop that's running *now* (the
+        # asyncio thread) so callbacks can hand events back to it safely.
+        self._loop = asyncio.get_event_loop()
 
         pins = sorted(list(self.course_pins | {self.clear_pin}))
         for pin in pins:
@@ -53,6 +60,15 @@ class GPIOManager:
                 pass
         self._buttons.clear()
 
+    def _dispatch(self, event: GPIOEvent) -> None:
+        # Called from gpiozero's background thread: never call self.on_event
+        # (and the asyncio calls it makes) directly from here. Hop back onto
+        # the event loop thread first.
+        if self._loop is not None:
+            self._loop.call_soon_threadsafe(self.on_event, event)
+        else:
+            self.on_event(event)
+
     def _make_pressed_handler(self, pin: int):
         def handler():
             now = time.monotonic()
@@ -60,10 +76,10 @@ class GPIOManager:
             if now - last < self.bounce_seconds:
                 return
             self._last_down[pin] = now
-            self.on_event(GPIOEvent(gpio_pin=pin, kind="down"))
+            self._dispatch(GPIOEvent(gpio_pin=pin, kind="down"))
         return handler
 
     def _make_released_handler(self, pin: int):
         def handler():
-            self.on_event(GPIOEvent(gpio_pin=pin, kind="up"))
+            self._dispatch(GPIOEvent(gpio_pin=pin, kind="up"))
         return handler

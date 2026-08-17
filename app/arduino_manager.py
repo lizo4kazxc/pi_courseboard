@@ -69,6 +69,7 @@ class ArduinoManager:
                     
                 # Decode and parse
                 message = line.decode('utf-8', errors='ignore').strip()
+                print(f"[arduino raw] {line!r} -> {message!r}")
                 await self._parse_message(message)
                 
             except asyncio.CancelledError:
@@ -87,7 +88,7 @@ class ArduinoManager:
         if message.startswith("BTN:"):
             # Single button event
             parts = message.split(":")
-            if len(parts) == 4:
+            if len(parts) == 3:
                 try:
                     input_id = int(parts[1])
                     kind = parts[2].lower()
