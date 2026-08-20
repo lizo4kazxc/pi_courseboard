@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    .adminWrap { display: grid; gap: 16px; margin-top: 16px; }
+    .field { display: grid; gap: 6px; }
+    .field label { font-size: 12px; color: var(--muted); font-weight: 700; }
+    .field input, .field select {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      width: 100%;
+    }
+    .formGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .full { grid-column: 1 / -1; }
+    .btn.primary { background: var(--kdg-blue); color: #fff; }
+    .btn.primary:hover { background: var(--kdg-blue-dark); }
+    .rowBtns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .note { color: var(--muted); font-size: 12px; }
+    .statusPill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800;
+      background: rgba(2,6,23,0.06); color: var(--muted);
+    }
+    .statusPill.ok { background: rgba(22,163,74,0.12); color: #16a34a; }
+    .statusPill.bad { background: rgba(220,38,38,0.12); color: var(--bad); }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { border-bottom: 1px solid var(--line); padding: 10px; text-align: left; font-size: 13px; }
+    .testGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+    }
+    .testTile {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+      transition: background 0.08s, border-color 0.08s;
+    }
+    .testTile .rawId { font-size: 22px; font-weight: 900; }
+    .testTile .mapped { font-size: 11px; color: var(--muted); margin-top: 4px; min-height: 28px; }
+    .testTile.active {
+      background: rgba(0, 91, 169, 0.14);
+      border-color: rgba(0, 91, 169, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">KDG</div>
+        <div class="titles">
+          <div class="title">{{ title }}</div>
+          <div class="subtitle">Input backend, Arduino wiring, and a live button tester.</div>
+        </div>
+      </div>
+      <div class="status">
+        <a class="btn secondary" href="/admin" style="text-decoration:none; display:inline-block;">Courses</a>
+        <a class="btn secondary" href="/admin/projects" style="text-decoration:none; display:inline-block;">Projects</a>
+        <a class="btn secondary" href="/admin/insights" style="text-decoration:none; display:inline-block;">Insights</a>
+        <a class="btn secondary" href="/" style="text-decoration:none; display:inline-block;">Back to display</a>
+      </div>
+    </header>
+
+    <div class="adminWrap">
+      <section class="panel">
+        <h2>Backend</h2>
+        <div class="rowBtns" style="margin-top:8px;">
+          <span id="backendStatus" class="statusPill">Loading...</span>
+        </div>
+        <div class="rowBtns" style="margin-top:12px;">
+          <select id="backendSelect">
+            <option value="gpio">GPIO (Raspberry Pi)</option>
+            <option value="arduino">Arduino (USB serial)</option>
+            <option value="simulation">Simulation</option>
+            <option value="mock">Mock</option>
+          </select>
+          <button class="btn primary" type="button" id="switchBackendBtn">Switch backend</button>
+        </div>
+        <div class="note" style="margin-top:8px;">
+          Switching backend takes effect immediately and is remembered across restarts.
+          GPIO mode will fail to start on a machine without real GPIO hardware.
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Arduino settings</h2>
+        <form id="arduinoForm">
+          <div class="formGrid">
+            <div class="field">
+              <label>Serial port</label>
+              <input id="serial_port" required />
+            </div>
+            <div class="field">
+              <label>Detected ports</label>
+              <select id="portPicker">
+                <option value="">Rescan...</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Baud rate</label>
+              <input id="baud_rate" required type="number" min="300" />
+            </div>
+
+            <div class="field">
+              <label>Clear / confirm raw input ID</label>
+              <input id="clear_input" required type="number" min="0" />
+            </div>
+            <div class="field">
+              <label>Total input count</label>
+              <input id="input_count" required type="number" min="1" />
+            </div>
+
+            <div class="field full">
+              <div class="note">
+                Each course button is wired to a raw Arduino input ID (0-based). Pick which raw ID
+                each course's physical button actually sends - this is the mapping that used to
+                require hand-editing arduino_config.json and restarting the server.
+              </div>
+            </div>
+
+            <div class="full" style="overflow:auto;">
+              <table class="table" id="mappingTable"></table>
+            </div>
+
+            <div class="rowBtns full">
+              <button class="btn primary" type="submit">Save Arduino config</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Live input tester</h2>
+        <div class="note" style="margin-bottom:10px;">
+          Shows every raw input the board reports right now, whether or not it's currently mapped
+          to a course - press physical buttons to see which raw ID lights up.
+        </div>
+        <div class="testGrid" id="testGrid"></div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/static/js/admin_hardware.js"></script>
+</body>
+</html>

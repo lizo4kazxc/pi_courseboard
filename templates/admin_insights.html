@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ title }}</title>
   <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; font-size: 12px; }
+    .btn.danger { background: #fff; border: 1px solid rgba(220,38,38,0.35); color: var(--bad); }
+    .btn.danger:hover { border-color: rgba(220,38,38,0.6); }
+  </style>
 </head>
 <body>
   <div class="app">
@@ -17,6 +23,8 @@
         </div>
       </div>
       <div class="status">
+        <a class="btn secondary" href="/admin/projects" style="text-decoration:none; display:inline-block;">Projects</a>
+        <a class="btn secondary" href="/admin/hardware" style="text-decoration:none; display:inline-block;">Hardware</a>
         <a class="btn secondary" href="/admin" style="text-decoration:none; display:inline-block;">Back to admin</a>
       </div>
     </header>
@@ -30,6 +38,27 @@
       <section class="panel">
         <h2>Most-pressed skills</h2>
         <div id="skillsBars"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Most-viewed projects</h2>
+        <div id="projectsBars"></div>
+      </section>
+
+      <section class="panel">
+        <div class="topActions" style="display:flex; justify-content:space-between; align-items:center;">
+          <h2>Raw press log</h2>
+          <div class="rowBtns" style="display:flex; gap:8px;">
+            <button class="btn secondary" type="button" id="downloadLogBtn">Download JSON</button>
+            <button class="btn danger" type="button" id="clearLogBtn">Clear log</button>
+          </div>
+        </div>
+        <div class="note" style="color:var(--muted); font-size:12px; margin:6px 0;">
+          Showing the most recent 50 of <span id="logCount">0</span> entries.
+        </div>
+        <div style="overflow:auto; max-height:360px;">
+          <table class="table" id="logTable" style="width:100%; border-collapse:collapse;"></table>
+        </div>
       </section>
     </main>
   </div>

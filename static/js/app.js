@@ -56,7 +56,9 @@ function ensureAudioCtx() {
 }
 
 function playTone(freq, durationMs = 100) {
-  const ctx = audioCtx;
+  // Re-attempt creation/resume on every play, not just once at load — this
+  // is what lets sound "catch up" the first time a real gesture happens.
+  const ctx = ensureAudioCtx();
   if (!ctx) return;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -107,40 +109,37 @@ function buildButtonsGrid() {
   grid.innerHTML = "";
 
   // Enter/clear is not shown as a tile here anymore (see updateHintLine).
-  const byPin = new Map(state.courses.map(c => [c.button_gpio_pin, c]));
-  const pins = state.courses.map(c => c.button_gpio_pin).sort((a, b) => a - b);
+  // Sorted by GPIO pin, which now also matches the desired on-screen
+  // reading order directly (see data/courses.json) — this keeps each
+  // tile's screen position matching its physical button position.
+  const courses = [...state.courses].sort((a, b) => a.button_gpio_pin - b.button_gpio_pin);
 
   // Two rows: top row gets the larger half when the count is odd.
-  const topCount = Math.ceil(pins.length / 2);
-  const rows = [pins.slice(0, topCount), pins.slice(topCount)];
+  const topCount = Math.ceil(courses.length / 2);
+  const rows = [courses.slice(0, topCount), courses.slice(topCount)];
 
-  for (const rowPins of rows) {
-    if (rowPins.length === 0) continue;
+  for (const rowCourses of rows) {
+    if (rowCourses.length === 0) continue;
 
     const row = document.createElement("div");
     row.className = "skillsRow";
-    row.style.gridTemplateColumns = `repeat(${rowPins.length}, minmax(0, 1fr))`;
+    row.style.gridTemplateColumns = `repeat(${rowCourses.length}, minmax(0, 1fr))`;
 
-    for (const pin of rowPins) {
-      const course = byPin.get(pin);
+    for (const course of rowCourses) {
+      const pin = course.button_gpio_pin;
 
       const tile = document.createElement("div");
       tile.className = "btnTile";
       tile.dataset.pin = String(pin);
 
-      const pinLine = document.createElement("div");
-      pinLine.className = "pin";
-      pinLine.textContent = `GPIO BCM ${pin}`;
-
       const label = document.createElement("div");
       label.className = "label";
-      label.textContent = course ? course.title : "Unassigned";
+      label.textContent = course.title;
 
       const meta = document.createElement("div");
       meta.className = "meta";
-      meta.textContent = course ? `Room ${course.room}` : "Add a course in Admin";
+      meta.textContent = `Room ${course.room}`;
 
-      tile.appendChild(pinLine);
       tile.appendChild(label);
       tile.appendChild(meta);
 
@@ -464,6 +463,7 @@ function connectWs() {
     if (msg.type === "pressed_update") {
       state.pressed_pins = msg.pressed_pins || [];
       updatePressedUI();
+      if (state.confirmed) startIdleTimer(); else startSelectionIdleTimer();
       return;
     }
 
@@ -474,6 +474,7 @@ function connectWs() {
         row.appendChild(courseCard(msg.course));
         qs("emptyState").style.display = "none";
         playTone(660, 90);
+        startSelectionIdleTimer();
       }
       return;
     }
@@ -486,6 +487,7 @@ function connectWs() {
         if (card) card.remove();
         qs("emptyState").style.display = row.children.length ? "none" : "block";
         playTone(330, 90);
+        startSelectionIdleTimer();
       }
       return;
     }
@@ -518,7 +520,7 @@ function connectWs() {
       return;
     }
 
-    if (msg.type === "courses_updated") {
+    if (msg.type === "courses_updated" || msg.type === "projects_updated") {
       await loadInitial();
       return;
     }
@@ -533,4 +535,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   qs("clearBtn").addEventListener("click", clearHistory);
   await loadInitial();
   connectWs();
+
+  // Physical Arduino/GPIO presses never fire a browser keydown, so they
+  // can't unlock the AudioContext themselves (browsers require a real local
+  // gesture on this page). Create it eagerly and grab any gesture this page
+  // does get — click/touch included, not just the keyboard test path — so
+  // sound has the best chance of being unlocked before the first real event.
+  ensureAudioCtx();
+  document.addEventListener("click", ensureAudioCtx);
+  document.addEventListener("touchstart", ensureAudioCtx);
 });

@@ -26,13 +26,17 @@ class InputManager:
         course_pins: set[int] = None,
         clear_pin: Optional[int] = None,
         on_event: Callable[[InputEvent], None] = None,
-        arduino_config: Optional[ArduinoConfig] = None
+        arduino_config: Optional[ArduinoConfig] = None,
+        on_raw_event: Callable[[int, str], None] = None
     ):
         self.backend = backend
         self.course_pins = course_pins or set()
         self.clear_pin = clear_pin
         self.on_event = on_event
         self.arduino_config = arduino_config
+        # Hardware-test diagnostic channel: (raw_input_id, kind), independent
+        # of course_inputs mapping validity. Only wired up for Arduino today.
+        self.on_raw_event = on_raw_event
         
         self._gpio_manager: Optional[GPIOManager] = None
         self._arduino_manager: Optional[ArduinoManager] = None
@@ -70,7 +74,7 @@ class InputManager:
         """Handle Arduino events"""
         # Map Arduino input ID to GPIO pin
         gpio_pin = self._arduino_to_gpio_map.get(event.input_id)
-        
+
         if gpio_pin is not None and self.on_event:
             input_event = InputEvent(
                 pin=gpio_pin,
@@ -79,6 +83,11 @@ class InputManager:
                 timestamp=event.timestamp
             )
             self.on_event(input_event)
+
+    def _on_arduino_raw_event(self, event: ArduinoEvent):
+        """Forward every raw input_id, mapped or not - used by the hardware test panel."""
+        if self.on_raw_event:
+            self.on_raw_event(event.input_id, event.kind)
     
     async def start(self):
         """Start the input manager based on selected backend"""
@@ -105,7 +114,8 @@ class InputManager:
             self._arduino_manager = ArduinoManager(
                 serial_port=self.arduino_config.serial_port,
                 baud_rate=self.arduino_config.baud_rate,
-                on_event=self._on_arduino_event
+                on_event=self._on_arduino_event,
+                on_raw_event=self._on_arduino_raw_event
             )
             
             await self._arduino_manager.start()

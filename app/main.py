@@ -1,8 +1,10 @@
 import asyncio
 import base64
+import uuid
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, status
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -26,6 +28,10 @@ app = FastAPI(title=APP_TITLE)
 
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+UPLOADS_DIR = Path("static") / "uploads"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
 storage = JSONStorage(COURSES_PATH, GPIO_MAP_PATH, PRESSES_LOG_PATH)
 
@@ -145,7 +151,9 @@ def on_input_event(event: InputEvent) -> None:  # UPDATED: Changed from on_gpio_
                 confirmed = True
                 project_sequence = _matching_project_ids()
                 project_index = 0
-                storage.log_press(pin, None, f"confirm_down_{event.source}")
+                shown_project_id = project_sequence[0] if project_sequence else None
+                suffix = f":{shown_project_id}" if shown_project_id else ""
+                storage.log_press(pin, None, f"confirm_down_{event.source}{suffix}")
                 asyncio.create_task(ws_broadcast({
                     "type": "confirmed",
                     "project_sequence": list(project_sequence),
@@ -154,7 +162,8 @@ def on_input_event(event: InputEvent) -> None:  # UPDATED: Changed from on_gpio_
             elif confirmed and project_index < len(project_sequence) - 1:
                 # Not on the last project yet: advance instead of exiting.
                 project_index += 1
-                storage.log_press(pin, None, f"project_advance_{event.source}")
+                shown_project_id = project_sequence[project_index]
+                storage.log_press(pin, None, f"project_advance_{event.source}:{shown_project_id}")
                 asyncio.create_task(ws_broadcast({
                     "type": "project_advanced",
                     "project_index": project_index,
@@ -191,42 +200,63 @@ def on_input_event(event: InputEvent) -> None:  # UPDATED: Changed from on_gpio_
         pressed_pins.discard(pin)
         storage.log_press(pin, None, f"button_up_{event.source}")
         asyncio.create_task(ws_broadcast({
-            "type": "pressed_update", 
+            "type": "pressed_update",
             "pressed_pins": sorted(list(pressed_pins))
         }))
+
+def on_raw_input_event(input_id: int, kind: str) -> None:
+    """Diagnostic-only: fires for every raw Arduino input, mapped or not.
+    Used by the admin hardware test panel; doesn't touch app state."""
+    asyncio.create_task(ws_broadcast({
+        "type": "raw_input",
+        "input_id": input_id,
+        "kind": kind,
+    }))
 
 @app.on_event("startup")
 async def startup() -> None:
     global course_by_pin, clear_pin, course_pins, input_manager
-    
+
     # Load GPIO map (still needed for pin assignments)
     gpio_map = storage.load_gpio_map()
     clear_pin = gpio_map.clear_pin
     course_pins = set(gpio_map.course_pins)
-    
+
     # Load courses
     course_by_pin = storage.get_courses_by_pin()
-    
+
+    # An admin may have switched backends via /api/admin/change-backend since
+    # the last restart - that choice is persisted to backend_config.json and
+    # takes priority over the .env/config.py default.
+    active_backend = DEFAULT_BACKEND
+    override = storage.load_backend_override()
+    if override:
+        try:
+            active_backend = InputBackend(override)
+        except ValueError:
+            print(f"Ignoring invalid persisted backend override: {override!r}")
+
     # Load Arduino config if needed
     arduino_config = None
-    if DEFAULT_BACKEND == InputBackend.ARDUINO:
+    if active_backend == InputBackend.ARDUINO:
         try:
             arduino_config = storage.load_arduino_config()
         except Exception as e:
             print(f"Could not load Arduino config, using defaults: {e}")
             arduino_config = ArduinoConfig()
-    
+
     # Create and start input manager
     input_manager = InputManager(
-        backend=DEFAULT_BACKEND,
+        backend=active_backend,
         course_pins=course_pins,
         clear_pin=clear_pin,
         on_event=on_input_event,
-        arduino_config=arduino_config
+        arduino_config=arduino_config,
+        on_raw_event=on_raw_input_event
     )
-    
+
     await input_manager.start()
-    print(f"Input manager started with backend: {DEFAULT_BACKEND.value}")
+    print(f"Input manager started with backend: {active_backend.value}")
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
@@ -263,6 +293,20 @@ async def admin_insights_page(request: Request, ok: bool = Depends(require_admin
         {"request": request, "title": f"{APP_TITLE} Insights"},
     )
 
+@app.get("/admin/hardware", response_class=HTMLResponse)
+async def admin_hardware_page(request: Request, ok: bool = Depends(require_admin)):
+    return templates.TemplateResponse(
+        "admin_hardware.html",
+        {"request": request, "title": f"{APP_TITLE} Hardware"},
+    )
+
+@app.get("/admin/projects", response_class=HTMLResponse)
+async def admin_projects_page(request: Request, ok: bool = Depends(require_admin)):
+    return templates.TemplateResponse(
+        "admin_projects.html",
+        {"request": request, "title": f"{APP_TITLE} Projects"},
+    )
+
 @app.get("/api/state")
 async def get_state():
     return JSONResponse(_state_payload())
@@ -297,6 +341,53 @@ async def delete_course(course_id: str, ok: bool = Depends(require_admin)):
     await ws_broadcast({"type": "courses_updated"})
     return {"ok": True}
 
+@app.post("/api/admin/upload-image")
+async def upload_image(file: UploadFile = File(...), ok: bool = Depends(require_admin)):
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type {ext!r}. Allowed: {', '.join(sorted(ALLOWED_IMAGE_EXTENSIONS))}",
+        )
+
+    contents = await file.read()
+    max_bytes = 8 * 1024 * 1024
+    if len(contents) > max_bytes:
+        raise HTTPException(status_code=400, detail="Image too large (max 8MB)")
+
+    filename = f"{uuid.uuid4().hex}{ext}"
+    dest = UPLOADS_DIR / filename
+    dest.write_bytes(contents)
+
+    return {"ok": True, "path": f"/static/uploads/{filename}"}
+
+@app.get("/api/projects")
+async def list_projects():
+    projects = storage.load_projects()
+    return [p.model_dump() for p in projects]
+
+@app.post("/api/admin/projects")
+async def create_project(project: Project, ok: bool = Depends(require_admin)):
+    storage.upsert_project(project)
+    await ws_broadcast({"type": "projects_updated"})
+    return {"ok": True}
+
+@app.put("/api/admin/projects/{project_id}")
+async def update_project(project_id: str, project: Project, ok: bool = Depends(require_admin)):
+    if project.project_id != project_id:
+        raise HTTPException(status_code=400, detail="project_id in path and body must match")
+    storage.upsert_project(project)
+    await ws_broadcast({"type": "projects_updated"})
+    return {"ok": True}
+
+@app.delete("/api/admin/projects/{project_id}")
+async def delete_project(project_id: str, ok: bool = Depends(require_admin)):
+    deleted = storage.delete_project(project_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Project not found")
+    await ws_broadcast({"type": "projects_updated"})
+    return {"ok": True}
+
 @app.post("/api/clear")
 async def clear_history():
     _reset_history()
@@ -321,11 +412,13 @@ def _reload_courses_cache() -> None:
     course_by_pin = storage.get_courses_by_pin()
 
 def _compute_insights() -> Dict[str, Any]:
-    """Aggregate stats from logs/presses.log: top skills, funnel counts."""
+    """Aggregate stats from logs/presses.log: top skills, top projects, funnel counts."""
     log = storage.load_presses_log()
     course_titles = {c.course_id: c.title for c in storage.load_courses()}
+    project_titles = {p.project_id: p.title for p in storage.load_projects()}
 
     skill_press_counts: Dict[str, int] = {}
+    project_view_counts: Dict[str, int] = {}
     sessions_confirmed = 0
     sessions_finished = 0
     sessions_abandoned_mid_selection = 0
@@ -341,11 +434,16 @@ def _compute_insights() -> Dict[str, Any]:
         if event_type.startswith("button_down_") and course_id:
             skill_press_counts[course_id] = skill_press_counts.get(course_id, 0) + 1
             had_selection_before_reset = True
-        elif event_type.startswith("confirm_down_"):
-            sessions_confirmed += 1
-            in_session = True
-        elif event_type.startswith("project_advance_"):
-            project_advances += 1
+        elif event_type.startswith("confirm_down_") or event_type.startswith("project_advance_"):
+            # The project actually shown is appended as "...:<project_id>" (see on_input_event).
+            if ":" in event_type:
+                shown_project_id = event_type.rsplit(":", 1)[1]
+                project_view_counts[shown_project_id] = project_view_counts.get(shown_project_id, 0) + 1
+            if event_type.startswith("confirm_down_"):
+                sessions_confirmed += 1
+                in_session = True
+            else:
+                project_advances += 1
         elif event_type.startswith("clear_down_") or event_type == "reset_via_api":
             if in_session:
                 sessions_finished += 1
@@ -363,6 +461,15 @@ def _compute_insights() -> Dict[str, Any]:
         reverse=True,
     )
 
+    top_projects = sorted(
+        (
+            {"project_id": pid, "title": project_titles.get(pid, pid), "views": count}
+            for pid, count in project_view_counts.items()
+        ),
+        key=lambda x: x["views"],
+        reverse=True,
+    )
+
     avg_projects_viewed = None
     if sessions_confirmed:
         avg_projects_viewed = round((project_advances + sessions_confirmed) / sessions_confirmed, 2)
@@ -370,6 +477,7 @@ def _compute_insights() -> Dict[str, Any]:
     return {
         "total_button_presses": sum(skill_press_counts.values()),
         "top_skills": top_skills,
+        "top_projects": top_projects,
         "sessions_confirmed": sessions_confirmed,
         "sessions_finished": sessions_finished,
         "sessions_abandoned_mid_selection": sessions_abandoned_mid_selection,
@@ -380,6 +488,15 @@ def _compute_insights() -> Dict[str, Any]:
 @app.get("/api/admin/insights")
 async def get_insights(ok: bool = Depends(require_admin)):
     return _compute_insights()
+
+@app.get("/api/admin/press-log")
+async def get_press_log(ok: bool = Depends(require_admin)):
+    return storage.load_presses_log()
+
+@app.delete("/api/admin/press-log")
+async def clear_press_log(ok: bool = Depends(require_admin)):
+    storage.clear_presses_log()
+    return {"ok": True}
 
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
@@ -400,6 +517,20 @@ async def websocket_endpoint(ws: WebSocket):
     finally:
         async with ws_lock:
             ws_clients.discard(ws)
+
+@app.get("/api/admin/serial-ports")
+async def list_serial_ports(ok: bool = Depends(require_admin)):
+    try:
+        import serial.tools.list_ports as list_ports
+        return [
+            {"device": p.device, "description": p.description}
+            for p in list_ports.comports()
+        ]
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to list serial ports: {str(e)}"}
+        )
 
 @app.get("/api/admin/arduino-config")
 async def get_arduino_config(ok: bool = Depends(require_admin)):
@@ -447,14 +578,15 @@ async def change_backend(backend: InputBackend, ok: bool = Depends(require_admin
             course_pins=course_pins,
             clear_pin=clear_pin,
             on_event=on_input_event,
-            arduino_config=arduino_config
+            arduino_config=arduino_config,
+            on_raw_event=on_raw_input_event
         )
-        
+
         await input_manager.start()
-        
-        # Update environment or config file to persist the change
-        # (You might want to save this to a config file)
-        
+
+        # Persist so this choice survives a server restart.
+        storage.save_backend_override(backend.value)
+
         return {
             "ok": True, 
             "message": f"Backend changed to {backend.value}",

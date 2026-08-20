@@ -3,64 +3,127 @@
     "project_id": "proj_vr_training",
     "title": "VR Training Experience",
     "description": "An immersive VR simulation built for a real client's staff training program.",
-    "skill_ids": ["skill_3d_design", "skill_game_design", "skill_business_essentials"],
+    "skill_ids": [
+      "skill_3d_design",
+      "skill_game_design",
+      "skill_business_essentials"
+    ],
     "image_path": "",
-    "image_paths": ["", "", ""]
+    "image_paths": [
+      "",
+      "",
+      ""
+    ]
   },
   {
     "project_id": "proj_client_rebrand",
     "title": "Client Rebrand Campaign",
     "description": "A full visual identity refresh and interactive brand guide for a local business.",
-    "skill_ids": ["skill_graphic_design", "skill_ux_ui", "skill_business_essentials"],
+    "skill_ids": [
+      "skill_graphic_design",
+      "skill_ux_ui",
+      "skill_business_essentials"
+    ],
     "image_path": "",
-    "image_paths": ["", "", ""]
+    "image_paths": [
+      "",
+      "",
+      ""
+    ]
   },
   {
     "project_id": "proj_indie_game",
     "title": "Indie Mobile Game",
     "description": "A short narrative mobile game with original animation and sound design.",
-    "skill_ids": ["skill_game_design", "skill_3d_animation", "skill_audio_video_postproduction"],
+    "skill_ids": [
+      "skill_game_design",
+      "skill_3d_animation",
+      "skill_audio_video_postproduction"
+    ],
     "image_path": "",
-    "image_paths": ["", "", ""]
+    "image_paths": [
+      "",
+      "",
+      ""
+    ]
   },
   {
     "project_id": "proj_drone_doc",
     "title": "Drone Sports Documentary",
     "description": "Aerial footage and effects work for a short documentary on local athletes.",
-    "skill_ids": ["skill_fablab_experiences", "skill_audio_video_postproduction", "skill_vfx"],
+    "skill_ids": [
+      "skill_fablab_experiences",
+      "skill_audio_video_postproduction",
+      "skill_vfx"
+    ],
     "image_path": "",
-    "image_paths": ["", "", ""]
+    "image_paths": [
+      "",
+      "",
+      ""
+    ]
   },
   {
     "project_id": "proj_podcast",
     "title": "Podcast Series & Sound Identity",
     "description": "A branded podcast series produced end-to-end, from concept to sound identity.",
-    "skill_ids": ["skill_audio_video_postproduction", "skill_business_essentials"],
+    "skill_ids": [
+      "skill_audio_video_postproduction",
+      "skill_business_essentials"
+    ],
     "image_path": "",
-    "image_paths": ["", "", ""]
+    "image_paths": [
+      "",
+      "",
+      ""
+    ]
   },
   {
     "project_id": "proj_music_video",
     "title": "Music Video Production",
     "description": "A music video combining live footage with 3D effects and motion graphics.",
-    "skill_ids": ["skill_vfx", "skill_3d_animation", "skill_audio_video_postproduction"],
+    "skill_ids": [
+      "skill_vfx",
+      "skill_3d_animation",
+      "skill_audio_video_postproduction"
+    ],
     "image_path": "",
-    "image_paths": ["", "", ""]
+    "image_paths": [
+      "",
+      "",
+      ""
+    ]
   },
   {
     "project_id": "proj_app_prototype",
     "title": "Product App Prototype",
     "description": "A gamified app prototype designed and user-tested for a startup client.",
-    "skill_ids": ["skill_ux_ui", "skill_graphic_design", "skill_game_design"],
+    "skill_ids": [
+      "skill_ux_ui",
+      "skill_graphic_design",
+      "skill_game_design"
+    ],
     "image_path": "",
-    "image_paths": ["", "", ""]
+    "image_paths": [
+      "",
+      "",
+      ""
+    ]
   },
   {
     "project_id": "proj_installation",
     "title": "Fabricated Interactive Installation",
     "description": "A physical interactive installation combining 3D-printed parts and custom UX.",
-    "skill_ids": ["skill_fablab_experiences", "skill_3d_design", "skill_ux_ui"],
+    "skill_ids": [
+      "skill_fablab_experiences",
+      "skill_3d_design",
+      "skill_ux_ui"
+    ],
     "image_path": "",
-    "image_paths": ["", "", ""]
+    "image_paths": [
+      "",
+      "",
+      ""
+    ]
   }
 ]

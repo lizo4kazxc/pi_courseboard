@@ -194,15 +194,14 @@ html, body {
 
 .btnTile {
   position: relative;
-  padding: 14px;
-  border-radius: 16px;
+  padding: 10px 12px;
+  border-radius: 14px;
   border: 1px solid var(--line);
   background: #fff;
-  min-height: 92px;
 
   display: grid;
-  gap: 6px;
-  align-content: start;
+  gap: 3px;
+  align-content: center;
 
   transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
 }
@@ -211,8 +210,8 @@ html, body {
   content: "";
   position: absolute;
   left: 0;
-  top: 14px;
-  bottom: 14px;
+  top: 10px;
+  bottom: 10px;
   width: 5px;
   border-radius: 999px;
   background: rgba(0, 91, 169, 0.0);
@@ -227,12 +226,6 @@ html, body {
 
 .btnTile:hover::before {
   background: rgba(0, 91, 169, 0.18);
-}
-
-.btnTile .pin {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--muted);
 }
 
 .btnTile .label {

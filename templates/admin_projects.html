@@ -9,7 +9,7 @@
     .adminWrap { display: grid; gap: 16px; margin-top: 16px; }
     .table { width: 100%; border-collapse: collapse; }
     .table th, .table td { border-bottom: 1px solid var(--line); padding: 10px; text-align: left; font-size: 13px; }
-    .rowBtns { display: flex; gap: 8px; }
+    .rowBtns { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn.primary { background: var(--kdg-blue); color: #fff; }
     .btn.primary:hover { background: var(--kdg-blue-dark); }
     .btn.danger { background: #fff; border: 1px solid rgba(220,38,38,0.35); color: var(--bad); }
@@ -26,26 +26,39 @@
     }
     .field textarea { min-height: 90px; resize: vertical; }
     .full { grid-column: 1 / -1; }
-    .topActions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .note { color: var(--muted); font-size: 12px; }
+    .skillChecks { display: flex; flex-wrap: wrap; gap: 8px; }
+    .skillCheck {
+      display: flex; align-items: center; gap: 6px;
+      border: 1px solid var(--line); border-radius: 999px;
+      padding: 6px 12px; font-size: 12px; cursor: pointer;
+    }
+    .imageSlots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .imageSlot { border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: grid; gap: 6px; }
+    .imageSlot img { max-width: 100%; max-height: 90px; border-radius: 8px; display: none; }
+    .skillTag {
+      display: inline-block; background: rgba(0,91,169,0.1); color: var(--kdg-blue);
+      border-radius: 999px; padding: 2px 8px; font-size: 11px; margin: 2px;
+    }
     /* .btn.secondary is white-on-transparent, meant for the dark topbar - on
        a light .panel it's invisible, so give panel buttons their own look. */
     .panel .btn.secondary { background: #fff; border: 1px solid var(--line); color: var(--text); }
     .panel .btn.secondary:hover { background: var(--bg); }
     .panel .btn.edit { background: #fff; border: 1px solid rgba(0,91,169,0.35); color: var(--kdg-blue); }
     .panel .btn.edit:hover { border-color: rgba(0,91,169,0.6); background: rgba(0,91,169,0.06); }
-    dialog#courseDialog {
+    .topActions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    dialog#projectDialog {
       border: none;
       border-radius: var(--radius);
       padding: 0;
-      max-width: 640px;
+      max-width: 680px;
       width: 92vw;
       max-height: 88vh;
       overflow: auto;
       box-shadow: 0 24px 60px rgba(2,6,23,0.25);
     }
-    dialog#courseDialog::backdrop { background: rgba(2,6,23,0.45); }
-    dialog#courseDialog .panel { box-shadow: none; margin: 0; }
+    dialog#projectDialog::backdrop { background: rgba(2,6,23,0.45); }
+    dialog#projectDialog .panel { box-shadow: none; margin: 0; }
   </style>
 </head>
 <body>
@@ -55,11 +68,11 @@
         <div class="logo">KDG</div>
         <div class="titles">
           <div class="title">{{ title }}</div>
-          <div class="subtitle">Add, edit, delete courses. Stored in JSON.</div>
+          <div class="subtitle">Add, edit, delete projects. Stored in JSON.</div>
         </div>
       </div>
       <div class="status">
-        <a class="btn secondary" href="/admin/projects" style="text-decoration:none; display:inline-block;">Projects</a>
+        <a class="btn secondary" href="/admin" style="text-decoration:none; display:inline-block;">Courses</a>
         <a class="btn secondary" href="/admin/hardware" style="text-decoration:none; display:inline-block;">Hardware</a>
         <a class="btn secondary" href="/admin/insights" style="text-decoration:none; display:inline-block;">Insights</a>
         <a class="btn secondary" href="/" style="text-decoration:none; display:inline-block;">Back to display</a>
@@ -69,44 +82,26 @@
     <div class="adminWrap">
       <section class="panel">
         <div class="topActions">
-          <h2>Courses</h2>
-          <button class="btn primary" type="button" id="addCourseBtn">+ Add course</button>
+          <h2>Projects</h2>
+          <button class="btn primary" type="button" id="addProjectBtn">+ Add project</button>
         </div>
-        <div class="note">GPIO pins use BCM numbering. Keep pins unique per course.</div>
         <div style="overflow:auto;">
-          <table class="table" id="coursesTable"></table>
+          <table class="table" id="projectsTable"></table>
         </div>
       </section>
 
-      <dialog id="courseDialog">
+      <dialog id="projectDialog">
         <section class="panel">
-          <h2 id="formTitle">Add course</h2>
-          <form id="courseForm">
+          <h2 id="formTitle">Add project</h2>
+          <form id="projectForm">
             <div class="formGrid">
               <div class="field">
-                <label>Course ID</label>
-                <input id="course_id" required />
+                <label>Project ID</label>
+                <input id="project_id" required />
               </div>
               <div class="field">
-                <label>GPIO pin (BCM)</label>
-                <input id="button_gpio_pin" required type="number" min="0" />
-                <div class="note" id="pinMappingNote"></div>
-              </div>
-
-              <div class="field full">
                 <label>Title</label>
                 <input id="title" required />
-              </div>
-
-              <div class="field">
-                <label>Room</label>
-                <input id="room" required />
-              </div>
-              <div class="field">
-                <label>Image (optional)</label>
-                <input id="image_path" placeholder="/static/img/yourphoto.jpg" />
-                <input id="image_file" type="file" accept="image/*" />
-                <img id="image_preview" style="display:none; max-width:100%; max-height:120px; border-radius:8px; margin-top:4px;" />
               </div>
 
               <div class="field full">
@@ -115,8 +110,13 @@
               </div>
 
               <div class="field full">
-                <label>Overview</label>
-                <textarea id="overview" required></textarea>
+                <label>Skills this project combines</label>
+                <div class="skillChecks" id="skillChecks"></div>
+              </div>
+
+              <div class="field full">
+                <label>Photo gallery (up to 3 - cycles automatically on the projects screen)</label>
+                <div class="imageSlots" id="imageSlots"></div>
               </div>
 
               <div class="rowBtns full">
@@ -131,6 +131,6 @@
   </div>
 
   <script src="/static/js/image_upload.js"></script>
-  <script src="/static/js/admin.js"></script>
+  <script src="/static/js/admin_projects.js"></script>
 </body>
 </html>

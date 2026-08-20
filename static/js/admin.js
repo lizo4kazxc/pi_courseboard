@@ -1,5 +1,8 @@
 let courses = [];
 let editingId = null;
+let clearPin = null;
+let backendType = null;
+let pinToRawInput = {};  // GPIO pin -> raw Arduino input ID, only populated when backend is arduino
 
 function qs(id) { return document.getElementById(id); }
 
@@ -23,6 +26,28 @@ function setForm(c) {
   qs("description").value = c.description || "";
   qs("overview").value = c.overview || "";
   qs("image_path").value = c.image_path || "";
+  qs("image_path").dispatchEvent(new Event("input"));
+  updatePinMappingNote();
+}
+
+function arduinoInputLabel(pin) {
+  if (backendType !== "arduino") return "";
+  const rawId = pinToRawInput[pin];
+  return rawId === undefined ? "not wired to any Arduino input" : `Arduino input ${rawId}`;
+}
+
+function updatePinMappingNote() {
+  const note = qs("pinMappingNote");
+  if (!note) return;
+  const pin = Number(qs("button_gpio_pin").value);
+  if (backendType !== "arduino" || Number.isNaN(pin)) {
+    note.textContent = "";
+    return;
+  }
+  const label = arduinoInputLabel(pin);
+  note.textContent = pinToRawInput[pin] === undefined
+    ? `This pin is not currently wired to any Arduino input.`
+    : `Currently wired to ${label}.`;
 }
 
 function resetForm() {
@@ -37,14 +62,20 @@ function renderTable() {
   table.innerHTML = "";
 
   const head = document.createElement("tr");
-  head.innerHTML = "<th>ID</th><th>GPIO</th><th>Title</th><th>Room</th><th>Actions</th>";
+  head.innerHTML = "<th>ID</th><th>GPIO (Arduino input)</th><th>Title</th><th>Room</th><th>Actions</th>";
   table.appendChild(head);
 
   for (const c of courses) {
+    const pin = Number(c.button_gpio_pin);
+    const rawId = pinToRawInput[pin];
+    const gpioCell = backendType === "arduino"
+      ? `${pin} ${rawId === undefined ? "(no Arduino input)" : `(input ${rawId})`}`
+      : String(pin);
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${escapeHtml(c.course_id)}</td>
-      <td>${Number(c.button_gpio_pin)}</td>
+      <td>${escapeHtml(gpioCell)}</td>
       <td>${escapeHtml(c.title)}</td>
       <td>${escapeHtml(c.room)}</td>
       <td></td>
@@ -52,7 +83,7 @@ function renderTable() {
     const actions = tr.querySelector("td:last-child");
 
     const editBtn = document.createElement("button");
-    editBtn.className = "btn secondary";
+    editBtn.className = "btn edit";
     editBtn.type = "button";
     editBtn.textContent = "Edit";
     editBtn.addEventListener("click", () => startEdit(c.course_id));
@@ -89,6 +120,18 @@ async function loadCourses() {
   renderTable();
 }
 
+async function loadBackendInfo() {
+  const res = await fetch("/api/state");
+  const state = await res.json();
+  clearPin = state.clear_pin ?? null;
+  backendType = state.backend?.type ?? null;
+  pinToRawInput = {};
+  const inputMapping = state.backend?.input_mapping || {};
+  for (const [rawId, pin] of Object.entries(inputMapping)) {
+    pinToRawInput[Number(pin)] = Number(rawId);
+  }
+}
+
 function startEdit(id) {
   const c = courses.find(x => x.course_id === id);
   if (!c) return;
@@ -96,6 +139,7 @@ function startEdit(id) {
   qs("formTitle").textContent = `Edit course ${id}`;
   qs("course_id").disabled = true;
   setForm(c);
+  qs("courseDialog").showModal();
 }
 
 async function saveCourse(payload) {
@@ -129,9 +173,21 @@ async function deleteCourse(id) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  await loadBackendInfo();
   await loadCourses();
+  wireImageUploadField("image_file", "image_path", "image_preview");
+  updatePinMappingNote();
+  qs("button_gpio_pin").addEventListener("input", updatePinMappingNote);
 
-  qs("resetBtn").addEventListener("click", resetForm);
+  qs("addCourseBtn").addEventListener("click", () => {
+    resetForm();
+    qs("courseDialog").showModal();
+  });
+
+  qs("resetBtn").addEventListener("click", () => {
+    resetForm();
+    qs("courseDialog").close();
+  });
 
   qs("courseForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -139,6 +195,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!payload.course_id) {
       alert("Course ID is required");
+      return;
+    }
+
+    if (clearPin !== null && payload.button_gpio_pin === clearPin) {
+      alert(`Pin ${clearPin} is reserved for the Clear/Confirm button and can't be used by a course.`);
       return;
     }
 
@@ -161,7 +222,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await saveCourse(payload);
       await loadCourses();
       resetForm();
-      alert("Saved");
+      qs("courseDialog").close();
     } catch (err) {
       alert("Save failed");
     }

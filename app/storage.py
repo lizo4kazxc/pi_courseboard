@@ -162,9 +162,15 @@ class JSONStorage:
         """Load the press log history."""
         if not self.presses_log_path.exists():
             return []
-        
+
         with open(self.presses_log_path, "r") as f:
             return json.load(f)
+
+    def clear_presses_log(self) -> None:
+        """Wipe the press log (e.g. after archiving stats for an open day)."""
+        self.presses_log_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.presses_log_path, "w") as f:
+            json.dump([], f)
     
     def load_arduino_config(self) -> ArduinoConfig:
         arduino_config_path = self.courses_path.parent / "arduino_config.json"
@@ -191,6 +197,21 @@ class JSONStorage:
             else:
                 f.write(config.json(indent=2))
 
+    def load_backend_override(self) -> Optional[str]:
+        """Which input backend an admin picked via the API, if any (persists across restarts)."""
+        path = self.courses_path.parent / "backend_config.json"
+        if not path.exists():
+            return None
+        with open(path, "r") as f:
+            data = json.load(f)
+        return data.get("backend")
+
+    def save_backend_override(self, backend: str) -> None:
+        path = self.courses_path.parent / "backend_config.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w") as f:
+            json.dump({"backend": backend}, f, indent=2)
+
     def load_projects(self) -> List[Project]:
         """Load placeholder projects that combine multiple skills/courses."""
         projects_path = self.courses_path.parent / "projects.json"
@@ -210,3 +231,31 @@ class JSONStorage:
                 print(f"Error loading project {item.get('project_id', 'unknown')}: {e}")
 
         return projects
+
+    def save_projects(self, projects: List[Project]) -> None:
+        projects_path = self.courses_path.parent / "projects.json"
+        projects_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(projects_path, "w") as f:
+            json.dump([p.model_dump() for p in projects], f, indent=2)
+
+    def upsert_project(self, project: Project) -> None:
+        """Insert or update a project."""
+        projects = self.load_projects()
+        found = False
+        for i, existing in enumerate(projects):
+            if existing.project_id == project.project_id:
+                projects[i] = project
+                found = True
+                break
+        if not found:
+            projects.append(project)
+        self.save_projects(projects)
+
+    def delete_project(self, project_id: str) -> bool:
+        """Delete a project by ID. Returns True if deleted, False if not found."""
+        projects = self.load_projects()
+        new_projects = [p for p in projects if p.project_id != project_id]
+        if len(new_projects) == len(projects):
+            return False
+        self.save_projects(new_projects)
+        return True

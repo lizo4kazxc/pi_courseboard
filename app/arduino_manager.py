@@ -19,11 +19,17 @@ class ArduinoManager:
         self,
         serial_port: str = "/dev/ttyACM0",
         baud_rate: int = 9600,
-        on_event: Callable[[ArduinoEvent], None] = None
+        on_event: Callable[[ArduinoEvent], None] = None,
+        on_raw_event: Callable[[ArduinoEvent], None] = None
     ):
         self.serial_port = serial_port
         self.baud_rate = baud_rate
         self.on_event = on_event
+        # Fires for every raw input_id the board reports, independent of
+        # whether course_inputs currently maps it to anything - lets a
+        # hardware-test UI show real signal even while the mapping is wrong
+        # or mid-edit, instead of silently dropping unmapped inputs.
+        self.on_raw_event = on_raw_event
         self._running = False
         self._reader: Optional[asyncio.StreamReader] = None
         self._writer: Optional[asyncio.StreamWriter] = None
@@ -96,14 +102,18 @@ class ArduinoManager:
                     if 0 <= input_id < 10 and kind in ["down", "up"]:
                         # Update state
                         self.button_states[input_id] = (kind == "down")
-                        
+
+                        event = ArduinoEvent(
+                            input_id=input_id,
+                            kind=kind,
+                            timestamp=asyncio.get_event_loop().time()
+                        )
+
+                        if self.on_raw_event:
+                            self.on_raw_event(event)
+
                         # Trigger event callback
                         if self.on_event:
-                            event = ArduinoEvent(
-                                input_id=input_id,
-                                kind=kind,
-                                timestamp=asyncio.get_event_loop().time()
-                            )
                             self.on_event(event)
                             
                 except (ValueError, IndexError):
@@ -120,10 +130,12 @@ class ArduinoManager:
                         
                         if new_state != old_state:
                             self.button_states[i] = new_state
+                            event = ArduinoEvent(
+                                input_id=i,
+                                kind="down" if new_state else "up",
+                                timestamp=asyncio.get_event_loop().time()
+                            )
+                            if self.on_raw_event:
+                                self.on_raw_event(event)
                             if self.on_event:
-                                event = ArduinoEvent(
-                                    input_id=i,
-                                    kind="down" if new_state else "up",
-                                    timestamp=asyncio.get_event_loop().time()
-                                )
                                 self.on_event(event)

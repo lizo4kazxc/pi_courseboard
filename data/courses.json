@@ -5,7 +5,7 @@
     "room": "Skill 01",
     "description": "Visual identity, layout, typography, and branding fundamentals.",
     "overview": "Select to include Graphic Design in your skill profile.",
-    "button_gpio_pin": 17,
+    "button_gpio_pin": 5,
     "image_path": ""
   },
   {
@@ -14,7 +14,7 @@
     "room": "Skill 02",
     "description": "3D modeling and scene building for products, environments, and concepts.",
     "overview": "Select to include 3D Design in your skill profile.",
-    "button_gpio_pin": 27,
+    "button_gpio_pin": 6,
     "image_path": ""
   },
   {
@@ -23,7 +23,7 @@
     "room": "Skill 03",
     "description": "Animation principles, motion, timing, and storytelling in 3D.",
     "overview": "Select to include 3D Animation in your skill profile.",
-    "button_gpio_pin": 22,
+    "button_gpio_pin": 13,
     "image_path": ""
   },
   {
@@ -32,7 +32,7 @@
     "room": "Skill 04",
     "description": "Gameplay systems, mechanics, balance, and player experience.",
     "overview": "Select to include Game Design in your skill profile.",
-    "button_gpio_pin": 5,
+    "button_gpio_pin": 17,
     "image_path": ""
   },
   {
@@ -41,7 +41,7 @@
     "room": "Skill 05",
     "description": "Compositing, tracking, and effects integration for film and media.",
     "overview": "Select to include VFX in your skill profile.",
-    "button_gpio_pin": 6,
+    "button_gpio_pin": 19,
     "image_path": ""
   },
   {
@@ -50,7 +50,7 @@
     "room": "Skill 06",
     "description": "Editing, sound, color, and finishing for polished video content.",
     "overview": "Select to include Postproduction in your skill profile.",
-    "button_gpio_pin": 13,
+    "button_gpio_pin": 21,
     "image_path": ""
   },
   {
@@ -59,7 +59,7 @@
     "room": "Skill 07",
     "description": "Prototyping with digital fabrication, 3D printing, and maker tools.",
     "overview": "Select to include Fablab Experiences in your skill profile.",
-    "button_gpio_pin": 19,
+    "button_gpio_pin": 22,
     "image_path": ""
   },
   {
@@ -77,7 +77,7 @@
     "room": "Skill 09",
     "description": "User research, wireframes, prototyping, usability, and interface design.",
     "overview": "Select to include UX UI in your skill profile.",
-    "button_gpio_pin": 21,
+    "button_gpio_pin": 27,
     "image_path": ""
   }
 ]

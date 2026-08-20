@@ -25,8 +25,10 @@ class InputBackend(str, Enum):
     SIMULATION = "simulation"
     MOCK = "mock"  # For backward compatibility
 
-# Default backend (can be overridden by environment variable)
-DEFAULT_BACKEND = InputBackend(os.getenv("INPUT_BACKEND", "gpio"))
+# Default backend (can be overridden by environment variable).
+# Raspberry Pi / GPIO isn't in use for now — default to Arduino over USB
+# serial (Windows COM port, see data/arduino_config.json) instead.
+DEFAULT_BACKEND = InputBackend(os.getenv("INPUT_BACKEND", "arduino"))
 
 # Arduino settings (only used if backend is ARDUINO)
 ARDUINO_SERIAL_PORT = os.getenv("ARDUINO_SERIAL_PORT", "/dev/ttyACM0")
