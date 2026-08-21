@@ -1,5 +1,5 @@
 {
-  "serial_port": "COM10",
+  "serial_port": "COM7",
   "baud_rate": 9600,
   "course_inputs": [
     0,

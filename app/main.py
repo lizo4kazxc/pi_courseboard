@@ -350,10 +350,16 @@ async def upload_image(file: UploadFile = File(...), ok: bool = Depends(require_
             detail=f"Unsupported file type {ext!r}. Allowed: {', '.join(sorted(ALLOWED_IMAGE_EXTENSIONS))}",
         )
 
-    contents = await file.read()
     max_bytes = 8 * 1024 * 1024
-    if len(contents) > max_bytes:
-        raise HTTPException(status_code=400, detail="Image too large (max 8MB)")
+    chunk_size = 1024 * 1024
+    contents = bytearray()
+    while True:
+        chunk = await file.read(chunk_size)
+        if not chunk:
+            break
+        contents.extend(chunk)
+        if len(contents) > max_bytes:
+            raise HTTPException(status_code=400, detail="Image too large (max 8MB)")
 
     filename = f"{uuid.uuid4().hex}{ext}"
     dest = UPLOADS_DIR / filename

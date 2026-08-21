@@ -79,7 +79,11 @@ function renderLogTable(entries) {
   for (const e of recent) {
     const tr = document.createElement("tr");
     const time = e.timestamp ? new Date(e.timestamp).toLocaleString() : "";
-    tr.innerHTML = `<td>${time}</td><td>${e.pin ?? ""}</td><td>${e.course_id ?? ""}</td><td>${e.event_type ?? ""}</td>`;
+    for (const value of [time, e.pin ?? "", e.course_id ?? "", e.event_type ?? ""]) {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    }
     table.appendChild(tr);
   }
 }
