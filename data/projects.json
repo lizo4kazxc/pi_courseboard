@@ -99,9 +99,9 @@
     "title": "Product App Prototype",
     "description": "A gamified app prototype designed and user-tested for a startup client.",
     "skill_ids": [
-      "skill_ux_ui",
+      "skill_game_design",
       "skill_graphic_design",
-      "skill_game_design"
+      "skill_ux_ui"
     ],
     "image_path": "",
     "image_paths": [
