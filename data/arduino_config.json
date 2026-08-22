@@ -2,8 +2,8 @@
   "serial_port": "COM7",
   "baud_rate": 9600,
   "course_inputs": [
-    0,
     1,
+    0,
     4,
     2,
     3,
